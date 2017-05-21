@@ -5,26 +5,45 @@
 #include <string.h>
 
 #include "mm.h"
+#include "config.h"
+
+#define rand_char       (rand() % 256)
+#define rand_mutation   (rand() % global_config.orb_mutation == 1)
 
 static struct mm* orb_mm = NULL;
 
 orb_t* create_orb(void) {
-  if (orb_mm == NULL) {
+
+  // check if orb memory manager is initialized
+  if (orb_mm == NULL)
     orb_mm = create_mm(sizeof(orb_t));
-  }
-  orb_t* orb = mm_elem_create(orb_mm);
+
+  // create new orb and reset it
+  orb_t* orb = (orb_t*)mm_elem_create(orb_mm);
+
   return reset_orb(orb);
 }
 
 orb_t* reset_orb(orb_t* orb) {
-  memset(orb, 0, sizeof(orb_t));
-  orb->x = rand() % W;
-  orb->y = rand() % H;
-  orb->score = 2000;
-  orb->o = 'o';
-  int _idx = 0;
-  for (; _idx < ORB_GEN_SIZE; _idx++)
-    orb->genes[_idx] = rand() % 256;
+
+  // set random position
+  orb->x      = rand() % W;
+  orb->y      = rand() % H;
+
+  // initialize score
+  orb->score  = global_config.orb_score;
+  orb->body   = global_config.orb_bodies[0];
+
+  return orb;
+}
+
+orb_t* reset_orb_genes(orb_t* orb) {
+  int l;
+
+  // create random genes
+  for (l = 0; l < ORB_GENE_SIZE; l++)
+    orb->genes[l] = rand_char;
+
   return orb;
 }
 
@@ -68,7 +87,7 @@ void orb_live(orb_t* orb, map_t* map) {
         // ttxx 0001
         int _x = wrap(orb->x + dirs[r2][0], W, 0);
         int _y = wrap(orb->y + dirs[r2][1], H, 0);
-        char _t = types[r1];
+        char _t = types[r1 & 0x3];
 
         if (map->data[pos(_x, _y)] == _t)
           orb->status |= ORB_ZF | (1 << r2);
@@ -88,7 +107,7 @@ void orb_live(orb_t* orb, map_t* map) {
           if (instr & 0x10)
             _of = -_of;
 
-          orb->idx = (orb->idx + _of) & ORB_GEN_MASK;
+          orb->idx = (orb->idx + _of) & ORB_GENE_MASK;
           jmp = 1;
         }
 
@@ -105,7 +124,7 @@ void orb_live(orb_t* orb, map_t* map) {
 
         if (r1 == r2) {
           // immediate
-          orb->idx = (orb->idx + 1) & ORB_GEN_MASK;
+          orb->idx = (orb->idx + 1) & ORB_GENE_MASK;
           orb->regs[r1] = orb->genes[orb->idx];
         } else {
           orb->regs[r1] = orb->regs[r2];
@@ -157,8 +176,14 @@ void orb_live(orb_t* orb, map_t* map) {
 
   }
 
+  if (rand_mutation) {
+    int idx = rand() & ORB_GENE_MASK;
+    orb->genes[idx] = rand_char;
+  }
+
+
   if (!jmp)
-    orb->idx = (orb->idx + 1) & ORB_GEN_MASK;
+    orb->idx = (orb->idx + 1) & ORB_GENE_MASK;
 
   if (orb->score-- <= 0) {
     orb_die(orb, map);
@@ -166,40 +191,58 @@ void orb_live(orb_t* orb, map_t* map) {
   }
 
   map_update_orb(map, orb);
-
-  //sprintf(map->data + pos(0, 23), "x: %d, y: %d, s: %d", orb->x, orb->y, orb->score);
 }
 
 void orb_feed(orb_t* orb, char food) {
-  if (food == '+')
-    orb->score += 1000;
-  else if (food == '#')
-    orb->score += 4000;
 
-  orb->o = orb->score < 5000 ? 'o' : 'O';
+  // update score depending on food type
+  if (food == global_config.food_types[0])
+    orb->score += global_config.food_scores[0];
+  else if (food == global_config.food_types[1])
+    orb->score += global_config.food_scores[1];
+
+  // update orb body depending on score
+  if (orb->score >= global_config.orb_scores[2])
+    orb->body = global_config.orb_bodies[2];
+  else if (orb->score >= global_config.orb_scores[1])
+    orb->body = global_config.orb_bodies[1];
+  else
+    orb->body = global_config.orb_bodies[0];
+
 }
 
 void orb_die(orb_t* orb, map_t* map) {
+
+  // remove orb from map
   map_remove_orb(map, orb);
+
+  // free orb
   free_orb(orb);
+
 }
 
 void orb_mutate(orb_t* orb) {
   int l = 0;
-  for (; l < ORB_GEN_SIZE; l++) {
-    if (rand() % 10000 == 1)
-      orb->genes[l] = rand() % 256;
+
+  // randomly mutate some of the genes
+  for (; l < ORB_GENE_SIZE; l++) {
+    if (rand_mutation)
+      orb->genes[l] = rand_char;
   }
+
 }
 
 orb_t* orb_crossover(orb_t* orb1, orb_t* orb2) {
   orb_t* new_orb = create_orb();
-  int cut = rand() % ORB_GEN_SIZE;
+  int cut = rand() & ORB_GENE_MASK;
+
+  // crossover genes from parents
   memcpy(new_orb->genes, orb1->genes, cut);
-  memcpy(new_orb->genes + cut, orb2->genes + cut, ORB_GEN_SIZE - cut - 1);
+  memcpy(new_orb->genes + cut, orb2->genes + cut, ORB_GENE_SIZE - cut - 1);
+
   return new_orb;
 }
 
-void free_orb(orb_t* orb) {
+void free_orb(void* orb) {
   mm_elem_free(orb_mm, orb);
 }

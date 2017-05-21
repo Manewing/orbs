@@ -5,24 +5,28 @@
 
 #include "map.h"
 #include "orb.h"
+#include "config.h"
 
 #define Hz(x) (1000000 / (x))
 
 int main() {
   srand(0);
 
-  map_t* m = create_map();
+  map_t* map = create_map();
 
   int l = 0;
-  for (; l < 40; l++)
-    map_add_orb(m, create_orb());
+  for (; l < global_config.orb_count; l++) {
+    orb_t* orb = create_orb();
+    reset_orb_genes(orb);
+    map_add_orb(map, orb);
+  }
 
   while(1) {
-    update_map(m);
-    draw_map(m);
+    update_map(map);
+    draw_map(map);
     usleep(Hz(200));
   }
 
-  free_map(m);
+  free_map(map);
   return 0;
 }
