@@ -2,6 +2,9 @@
 #define CONFIG_HH
 
 typedef struct {
+  int   skip;
+  int   seed;
+
   int   orb_count;
   int   orb_score;
   int   orb_mutation;
