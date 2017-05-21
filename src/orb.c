@@ -83,21 +83,38 @@ void orb_live(orb_t* orb, map_t* map) {
     case 0x1:
       {
 
-        // sense
-        // ttxx 0001
-        int _x = wrap(orb->x + dirs[r2][0], W, 0);
-        int _y = wrap(orb->y + dirs[r2][1], H, 0);
-        char _t = types[r1 & 0x3];
+        // act
+        // ccdd 0001
 
-        if (map->data[pos(_x, _y)] == _t)
-          orb->status |= ORB_ZF | (1 << r2);
+        if (r1 == 0x0 || r1 == ((orb->status >> 4) & 0x3)) {
+
+          orb->x = wrap(orb->x + dirs[r2][0], W, 0);
+          orb->y = wrap(orb->y + dirs[r2][1], H, 0);
+
+        }
+
+        if (r1 != 0x0)
+          orb->status &= 0xf;
 
       } break;
     case 0x2:
       {
 
+        // sense
+        // ttxx 0010
+        int _x = wrap(orb->x + dirs[r2][0], W, 0);
+        int _y = wrap(orb->y + dirs[r2][1], H, 0);
+        char _t = types[r1 & 0x3];
+
+        if (map->data[pos(_x, _y)] == _t)
+          orb->status |= (1 << r2);
+
+      } break;
+    case 0x3:
+      {
+
         // jmp
-        // cc0x 0010
+        // cclx 0011
         // yyyy yyyy
         //
         if (r1 == 0x0 || r1 == ((orb->status >> 4) & 0x3)) {
@@ -106,20 +123,22 @@ void orb_live(orb_t* orb, map_t* map) {
 
           if (instr & 0x10)
             _of = -_of;
+          if (instr & 0x20)
+            orb->lr = (orb->idx + 1) & ORB_GENE_MASK;
 
           orb->idx = (orb->idx + _of) & ORB_GENE_MASK;
           jmp = 1;
         }
 
         if (r1 != 0x0)
-          orb->status &= ~0xf;
+          orb->status &= 0xf;
 
       } break;
-    case 0x3:
+    case 0x4:
       {
 
         // mov
-        // r1r2 0011
+        // r1r2 0100
         // vvvv vvvv (C)
 
         if (r1 == r2) {
@@ -131,11 +150,11 @@ void orb_live(orb_t* orb, map_t* map) {
         }
 
       } break;
-    case 0x4:
+    case 0x5:
       {
 
         // add
-        // r1r2 0100
+        // r1r2 0101
 
         orb->regs[r1] += orb->regs[r2];
         if (orb->regs[r1] == 0)
@@ -144,11 +163,11 @@ void orb_live(orb_t* orb, map_t* map) {
           orb->status |= ORB_NF;
 
       } break;
-    case 0x5:
+    case 0x6:
       {
 
         // sub
-        // r1r2 0101
+        // r1r2 0110
 
         orb->regs[r1] -= orb->regs[r2];
         if (orb->regs[r1] == 0)
@@ -157,10 +176,10 @@ void orb_live(orb_t* orb, map_t* map) {
           orb->status |= ORB_NF;
 
       } break;
-    case 0x6:
+    case 0x7:
       {
         // inc/dec
-        // r10x 0110
+        // r1lx 0111
 
         if (instr & 0x10)
           orb->regs[r1]++;
@@ -173,7 +192,46 @@ void orb_live(orb_t* orb, map_t* map) {
           orb->status |= ORB_NF;
 
       } break;
+    case 0x8:
+      {
+        // stat
+        // xxxx 1000
 
+        if ((instr >> 4) == (orb->status & 0xf))
+            orb->status |= ORB_ZF;
+        orb->status &= ~0xf;
+
+      } break;
+    case 0x9:
+      {
+        // load/store
+        // r1r2 1001
+
+        switch (r1) {
+          case 0x0:
+            orb->regs[r2] = orb->status;
+            break;
+          case 0x1:
+            orb->regs[r2] = orb->score / 1000;
+            break;
+          case 0x2:
+            orb->idx = orb->regs[r2];
+            break;
+          case 0x3:
+            orb->regs[r2] = orb->regs[r1];
+            break;
+         }
+
+      } break;
+    case 0xA:
+      {
+        // return
+        // 0000 1010
+
+        orb->idx = orb->lr;
+        jmp = 1;
+
+      } break;
   }
 
   if (rand_mutation) {

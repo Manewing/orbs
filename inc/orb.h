@@ -23,6 +23,7 @@ typedef struct orb_t {
 
   char    status;
   char    regs[4];
+  int     lr;
   int     idx;
   char    genes[ORB_GENE_SIZE];
 } orb_t;
