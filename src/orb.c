@@ -4,8 +4,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mm.h"
+
+static struct mm* orb_mm = NULL;
+
 orb_t* create_orb(void) {
-  orb_t* orb = (orb_t*)malloc(sizeof(orb_t));
+  if (orb_mm == NULL) {
+    orb_mm = create_mm(sizeof(orb_t));
+  }
+  orb_t* orb = mm_elem_create(orb_mm);
   return reset_orb(orb);
 }
 
@@ -20,9 +27,8 @@ orb_t* reset_orb(orb_t* orb) {
     orb->genes[_idx] = rand() % 256;
   return orb;
 }
-static int counter = 0;
+
 void orb_live(orb_t* orb, map_t* map) {
-  counter++;
   char instr = orb->genes[orb->idx];
   int r1 = (instr >> 6) & 0x3;
   int r2 = (instr >> 4) & 0x3;
@@ -195,5 +201,5 @@ orb_t* orb_crossover(orb_t* orb1, orb_t* orb2) {
 }
 
 void free_orb(orb_t* orb) {
-  free(orb);
+  mm_elem_free(orb_mm, orb);
 }
