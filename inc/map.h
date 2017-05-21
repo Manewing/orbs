@@ -16,6 +16,7 @@ typedef struct {
 
 map_t* create_map(void);
 map_t* reset_map(map_t* map);
+
 void update_map(map_t* map);
 
 void map_add_orb(map_t* map, struct orb_t* orb);
@@ -26,6 +27,6 @@ void draw_map(map_t* map);
 void free_map(map_t* map);
 
 #define pos(x, y) ((x) + ((y)*W))
-#define wrap(x, max, min) ((x) >= max ? min : ((x) < min ? max : (x)))
+#define wrap(x, max, min) ((x) >= max ? min : ((x) < min ? max-1 : (x)))
 
 #endif // #ifndef MAP_HH

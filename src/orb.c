@@ -13,14 +13,16 @@ orb_t* reset_orb(orb_t* orb) {
   memset(orb, 0, sizeof(orb_t));
   orb->x = rand() % W;
   orb->y = rand() % H;
-  orb->score = 200;
+  orb->score = 2000;
+  orb->o = 'o';
   int _idx = 0;
   for (; _idx < ORB_GEN_SIZE; _idx++)
     orb->genes[_idx] = rand() % 256;
   return orb;
 }
-
+static int counter = 0;
 void orb_live(orb_t* orb, map_t* map) {
+  counter++;
   char instr = orb->genes[orb->idx];
   int r1 = (instr >> 6) & 0x3;
   int r2 = (instr >> 4) & 0x3;
@@ -44,7 +46,7 @@ void orb_live(orb_t* orb, map_t* map) {
         char _d;
 
         if (instr & 0x10) {
-          _d = r1;
+          _d = r1 & 0x3;
         } else {
           _d = orb->regs[r1] & 0x3;
         }
@@ -83,6 +85,9 @@ void orb_live(orb_t* orb, map_t* map) {
           orb->idx = (orb->idx + _of) & ORB_GEN_MASK;
           jmp = 1;
         }
+
+        if (r1 != 0x0)
+          orb->status &= ~0xf;
 
       } break;
     case 0x3:
@@ -149,21 +154,9 @@ void orb_live(orb_t* orb, map_t* map) {
   if (!jmp)
     orb->idx = (orb->idx + 1) & ORB_GEN_MASK;
 
-  orb->score -= 1;
-  if (orb->score <= 0) {
-    //orb_die(orb, map);
-    //return;
-  } else if (orb->score < 500) {
-    orb->o = 'o';
-  } else {
-    orb->o = 'O';
-  }
-
-  // random mutation of orb
-  if (rand() % 10000 == 1) {
-    char g = rand() % 256;
-    int idx = rand() % ORB_GEN_SIZE;
-    orb->genes[idx] = g;
+  if (orb->score-- <= 0) {
+    orb_die(orb, map);
+    return;
   }
 
   map_update_orb(map, orb);
@@ -171,9 +164,34 @@ void orb_live(orb_t* orb, map_t* map) {
   //sprintf(map->data + pos(0, 23), "x: %d, y: %d, s: %d", orb->x, orb->y, orb->score);
 }
 
+void orb_feed(orb_t* orb, char food) {
+  if (food == '+')
+    orb->score += 1000;
+  else if (food == '#')
+    orb->score += 4000;
+
+  orb->o = orb->score < 5000 ? 'o' : 'O';
+}
+
 void orb_die(orb_t* orb, map_t* map) {
   map_remove_orb(map, orb);
   free_orb(orb);
+}
+
+void orb_mutate(orb_t* orb) {
+  int l = 0;
+  for (; l < ORB_GEN_SIZE; l++) {
+    if (rand() % 10000 == 1)
+      orb->genes[l] = rand() % 256;
+  }
+}
+
+orb_t* orb_crossover(orb_t* orb1, orb_t* orb2) {
+  orb_t* new_orb = create_orb();
+  int cut = rand() % ORB_GEN_SIZE;
+  memcpy(new_orb->genes, orb1->genes, cut);
+  memcpy(new_orb->genes + cut, orb2->genes + cut, ORB_GEN_SIZE - cut - 1);
+  return new_orb;
 }
 
 void free_orb(orb_t* orb) {

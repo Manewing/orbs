@@ -20,7 +20,7 @@ int main() {
   while(1) {
     update_map(m);
     draw_map(m);
-    usleep(Hz(100));
+    usleep(Hz(200));
   }
 
   free_map(m);

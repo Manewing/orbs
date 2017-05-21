@@ -3,7 +3,6 @@
 
 #include "map.h"
 
-#define ORB_BODY        'O'
 #define ORB_GEN_SIZE    256
 #define ORB_GEN_MASK   0xFF
 
@@ -30,7 +29,11 @@ orb_t* create_orb(void);
 orb_t* reset_orb(orb_t* orb);
 
 void orb_live(orb_t* orb, map_t* map);
+void orb_feed(orb_t* orb, char food);
 void orb_die(orb_t* orb, map_t* map);
+
+void orb_mutate(orb_t* orb);
+orb_t* orb_crossover(orb_t* orb1, orb_t* orb2);
 
 void free_orb(orb_t* orb);
 
