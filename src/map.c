@@ -140,8 +140,8 @@ void update_map(map_t* map) {
 
 void draw_map(map_t* map) {
   // update map info
-  int n = sprintf(map->buffer, "[ORBS][0x%x] # %6ld: Orbs: %ld, FR: %d, MR: %d",
-      global_config.seed, map->iteration, map->orbs.size,
+  int n = sprintf(map->buffer, "[ORBS][0x%x] %d Hz, # %6ld: Orbs: %ld, FR: %d, MR: %d",
+      global_config.seed, global_config.herz, map->iteration, map->orbs.size,
       global_config.food_rate, global_config.orb_mutation);
   map->buffer[n] = ' ';
 

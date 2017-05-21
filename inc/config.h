@@ -4,6 +4,7 @@
 typedef struct {
   int   skip;
   int   seed;
+  int   herz;
 
   int   orb_count;
   int   orb_score;

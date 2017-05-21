@@ -2,7 +2,9 @@
 #include <argp.h>
 #include <stdlib.h>
 #include <string.h>
+#include <termios.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "map.h"
 #include "orb.h"
@@ -17,7 +19,8 @@ static char args_doc[] = "";
 static struct argp_option options[] = {
   { "seed", 'r', "SEED", 0, "Seed for srand (default = 0)" },
   { "skip", 's', "NUM", 0, "Skip first NUM iterations" },
-  { "orbs", 'o', "NUM", 0, "Number of orbs in initial population" },
+  { "herz", 'h', "HZ", 0, "Update rate in herz" },
+  { "orbs", 'o', "ORBS", 0, "Number of orbs in initial population" },
   { "mutate", 'm', "NUM", 0, "Rate at which mutations take place P(mutate) = (1 / NUM" },
   { "food", 'f', "NUM", 0, "Rate at which food spawns P(food) = (1 / NUM)" }
 };
@@ -32,6 +35,9 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state) {
     case 's':
       config->skip = atoi(arg);
       break;
+    case 'h':
+      config->herz = atoi(arg);
+      break;
     case 'o':
       config->orb_count = atoi(arg);
       break;
@@ -41,10 +47,6 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state) {
     case 'f':
       config->food_rate = atoi(arg);
       break;
-    /*case ARGP_KEY_ARG:
-      return 0;
-    case ARGP_KEY_END:
-      return 0;*/
     default:
       return ARGP_ERR_UNKNOWN;
   }
@@ -53,6 +55,9 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state) {
 }
 
 static struct argp argp = { options, parse_opt, args_doc, doc };
+
+int quit = 0;
+void* input(void* ptr);
 
 int main(int argc, char* argv[]) {
   int l;
@@ -78,15 +83,53 @@ int main(int argc, char* argv[]) {
     update_map(map);
   }
 
+  // start input thread
+  pthread_t input_thread;
+  pthread_create(&input_thread, NULL, input, NULL);
+
   // main loop
-  while(map->orbs.size) {
+  while(!quit) {
     update_map(map);
     draw_map(map);
-    usleep(Hz(200));
+    if (!map->orbs.size)
+      quit = 1;
+    usleep(Hz(global_config.herz));
   }
 
-  printf("Population died out...\n");
+  pthread_join(input_thread, NULL);
+
+  if (!map->orbs.size)
+    printf("Population died out...\n");
 
   free_map(map);
   return 0;
+}
+
+void* input(void* ptr) {
+  (void)ptr;
+  struct termios t0, t1;
+  tcgetattr(STDIN_FILENO, &t0);
+  t1 = t0;
+  t1.c_lflag &= ~(ICANON);
+  tcsetattr(STDIN_FILENO, TCSANOW, &t1);
+
+  while (!quit) {
+    int c = getc(stdin);
+    switch (c) {
+      case 'q':
+        quit = 1;
+        break;
+      case 'w':
+        global_config.herz += 10;
+        break;
+      case 's':
+        global_config.herz -= 10;
+        global_config.herz = global_config.herz < 0 ? 1 : global_config.herz;
+        break;
+      default:
+        break;
+    }
+  }
+
+  tcsetattr(STDIN_FILENO, TCSANOW, &t0);
 }

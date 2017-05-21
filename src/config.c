@@ -3,6 +3,7 @@
 config_t global_config = {
   .skip               =      0,
   .seed               =      0,
+  .herz               =    201,
   .orb_count          =     80,
   .orb_score          =   1500,
   .orb_mutation       =  10000,

@@ -11,7 +11,7 @@ build:
 	mkdir -p build
 
 orbs: $(OBJS) | build
-	gcc $(CFLAGS) $(OBJS) -o orbs
+	gcc $(CFLAGS) $(OBJS) -o orbs -lpthread
 
 build/%.o: src/%.c | build
 	gcc $(CFLAGS) -c $< -o $@
