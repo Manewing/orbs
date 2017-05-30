@@ -22,7 +22,8 @@ static struct argp_option options[] = {
   { "herz", 'h', "HZ", 0, "Update rate in herz" },
   { "orbs", 'o', "ORBS", 0, "Number of orbs in initial population" },
   { "mutate", 'm', "NUM", 0, "Rate at which mutations take place P(mutate) = (1 / NUM" },
-  { "food", 'f', "NUM", 0, "Rate at which food spawns P(food) = (1 / NUM)" }
+  { "food", 'f', "NUM", 0, "Rate at which food spawns P(food) = (1 / NUM)" },
+  {0}
 };
 
 static error_t parse_opt(int key, char* arg, struct argp_state* state) {
@@ -132,4 +133,6 @@ void* input(void* ptr) {
   }
 
   tcsetattr(STDIN_FILENO, TCSANOW, &t0);
+
+  return NULL;
 }
