@@ -21,18 +21,30 @@ orb_t* create_orb(void) {
   // create new orb and reset it
   orb_t* orb = (orb_t*)mm_elem_create(orb_mm);
 
+  // reset orb
+  reset_orb_genes(orb);
+
   return reset_orb(orb);
 }
 
 orb_t* reset_orb(orb_t* orb) {
 
+  // reset orb state
+  orb->idx     = 0;
+  orb->lr      = 0;
+  orb->status  = 0;
+  orb->regs[0] = 0;
+  orb->regs[1] = 0;
+  orb->regs[2] = 0;
+  orb->regs[3] = 0;
+
   // set random position
-  orb->x      = rand() % W;
-  orb->y      = rand() % H;
+  orb->x       = rand() % W;
+  orb->y       = rand() % H;
 
   // initialize score
-  orb->score  = global_config.orb_score;
-  orb->body   = global_config.orb_bodies[0];
+  orb->score   = global_config.orb_score;
+  orb->body    = global_config.orb_bodies[0];
 
   return orb;
 }
