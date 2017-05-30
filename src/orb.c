@@ -43,6 +43,7 @@ orb_t* reset_orb(orb_t* orb) {
   orb->y       = rand() % H;
 
   // initialize score
+  orb->ttl     = 0xffff;
   orb->score   = global_config.orb_score;
   orb->body    = global_config.orb_bodies[0];
 
@@ -118,8 +119,36 @@ void orb_live(orb_t* orb, map_t* map) {
         int _y = wrap(orb->y + dirs[r2][1], H, 0);
         char _t = types[r1 & 0x3];
 
+        orb->status &= 0xf0;
         if (map->data[pos(_x, _y)] == _t)
           orb->status |= (1 << r2);
+
+      } break;
+    case 0xB:
+      {
+        // sense
+        // r1r2 1011
+        orb->status &= ~ORB_ZF;
+
+        int l;
+
+        if (r2 & 0x1) {
+          for (l = 0; l < W; l++) {
+            if (map->data[pos(l, orb->y)] != ' ') {
+              orb->status |= ORB_ZF;
+              orb->regs[r1] = l < orb->x ? 0 : 2;
+              break;
+            }
+          }
+        } else {
+          for (l = 0; l < H; l++) {
+            if (map->data[pos(orb->x, l)] != ' ') {
+              orb->status |= ORB_ZF;
+              orb->regs[r1] = l < orb->y ? 0 : 2;
+              break;
+            }
+          }
+        }
 
       } break;
     case 0x3:
@@ -255,7 +284,7 @@ void orb_live(orb_t* orb, map_t* map) {
   if (!jmp)
     orb->idx = (orb->idx + 1) & ORB_GENE_MASK;
 
-  if (orb->score-- <= 0) {
+  if (orb->score-- <= 0 || orb->ttl-- <= 0) {
     orb_die(orb, map);
     return;
   }

@@ -20,6 +20,7 @@ typedef struct orb_t {
 
   char    body;
   int     score;
+  int     ttl;
 
   char    status;
   char    regs[4];
