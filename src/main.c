@@ -23,11 +23,15 @@ static struct argp_option options[] = {
   { "orbs", 'o', "ORBS", 0, "Number of orbs in initial population" },
   { "mutate", 'm', "NUM", 0, "Rate at which mutations take place P(mutate) = (1 / NUM" },
   { "food", 'f', "NUM", 0, "Rate at which food spawns P(food) = (1 / NUM)" },
+  { "foodscore-0", 513, "SCORE", 0, "Sets SCORE of food type 0"},
+  { "foodscore-1", 514, "SCORE", 0, "Sets SCORE of food type 1"},
   {0}
 };
 
 static error_t parse_opt(int key, char* arg, struct argp_state* state) {
   config_t* config = state->input;
+
+  int type = 0;
 
   switch (key) {
     case 'r':
@@ -47,6 +51,13 @@ static error_t parse_opt(int key, char* arg, struct argp_state* state) {
       break;
     case 'f':
       config->food_rate = atoi(arg);
+      break;
+    case 514:
+      type = 1;
+    case 513:
+      {
+        config->food_scores[type] = atoi(arg);
+      }
       break;
     default:
       return ARGP_ERR_UNKNOWN;
