@@ -471,13 +471,14 @@ void orb_feed(orb_t* orb, char food) {
     orb->score += global_config.food_scores[1];
 
   // update orb body depending on score
-  if (orb->score >= global_config.orb_scores[2])
-    orb->body = global_config.orb_bodies[2];
-  else if (orb->score >= global_config.orb_scores[1])
-    orb->body = global_config.orb_bodies[1];
-  else
-    orb->body = global_config.orb_bodies[0];
-
+  if (!orb->highlight) {
+    if (orb->score >= global_config.orb_scores[2])
+      orb->body = global_config.orb_bodies[2];
+    else if (orb->score >= global_config.orb_scores[1])
+      orb->body = global_config.orb_bodies[1];
+    else
+      orb->body = global_config.orb_bodies[0];
+  }
 }
 
 void orb_die(orb_t* orb, map_t* map) {

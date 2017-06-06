@@ -11,6 +11,13 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#define FAIL(cond, fmt, ...) if ((cond)) { printf(fmt, ##__VA_ARGS__); return -1; }
+
+#define ARG_CNT_FAIL(idx) FAIL(args[idx] == NULL, "not enough arguments\n")
+#define ORB_SEL_FAIL      FAIL(current_orb == NULL, "no orb selected\n")
+#define GET_ORB_FAIL(orb, str) \
+  orb = str2orb(str); FAIL(orb == NULL, "no such orb: %s\n", str)
+
 extern map_t* map;
 
 static char* orbs_shell_getline(char* pref) {
@@ -65,6 +72,7 @@ static orb_t* str2orb(char* str) {
 }
 
 static void print_orb_status(orb_t* orb) {
+  printf("%8p  ->  map/orb%d/ @ [%2d, %2d]\n", orb, orb->id, orb->x, orb->y);
   printf("  [Score]  : %d\n", orb->score);
   printf("  [TTL]    : %d\n", orb->ttl);
   printf("  [Status] : 0x%02x\n", orb->status);
@@ -92,70 +100,98 @@ static int print_orb_disas_instr(orb_t* orb, int idx) {
 }
 
 static int orbs_cmd_disas(char** args) {
+  ORB_SEL_FAIL;
+  printf("%p -> genes @ map/%s/\n", current_orb, args[1]);
 
-  if (current_orb != NULL) {
-    printf("%p -> genes @ map/%s/\n", current_orb, args[1]);
-
-    int idx = 0;
-    while (idx < ORB_GENE_SIZE) {
-      if (idx == current_orb->idx)
-        printf(" -> ");
-      else
-        printf("    ");
-      idx += print_orb_disas_instr(current_orb, idx);
-    }
-
-    return 1;
+  int idx = 0;
+  while (idx < ORB_GENE_SIZE) {
+    if (idx == current_orb->idx)
+      printf(" -> ");
+    else
+      printf("    ");
+    idx += print_orb_disas_instr(current_orb, idx);
   }
 
-  printf("no orb selected\n");
   return 1;
 }
 
 static int orbs_cmd_p(char** args) {
-  if (current_orb != NULL) {
-    print_orb_status(current_orb);
-    return 1;
-  }
-
-  printf("no orb selected\n");
+  ORB_SEL_FAIL;
+  print_orb_status(current_orb);
   return 1;
 }
 
 static int orbs_cmd_s(char** args) {
-  if (current_orb != NULL) {
-    int id = current_orb->id;
+  ORB_SEL_FAIL;
+  int id = current_orb->id;
 
-    // do one step
-    update_map(map);
+  // do one step
+  update_map(map);
 
-    current_orb = get_orb(id);
-    if (current_orb == NULL) {
-      printf("orb%d died...\n", id);
-      return 1;
-    }
-
-    print_orb_disas_instr(current_orb, current_orb->idx);
-
+  current_orb = get_orb(id);
+  if (current_orb == NULL) {
+    printf("orb%d died...\n", id);
     return 1;
   }
-  printf("no orb selected\n");
+
+  print_orb_disas_instr(current_orb, current_orb->idx);
+
+  return 1;
+}
+
+static int orbs_cmd_highlight(char** args) {
+
+  int idx = 0;
+  orb_t* orb = NULL;
+  static int hl_orbs[10] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+
+  if (args[1] != NULL) {
+    if (strcmp(args[1], "rm") == 0) {
+      ARG_CNT_FAIL(2);
+
+      idx = atoi(args[2]);
+      FAIL(idx < 0 || idx > 9, "index out of range: %d", idx);
+
+      // if orb is still alive un highlight (by feeding nothing)
+      orb = get_orb(hl_orbs[idx]);
+      if (orb) {
+        orb->highlight = 0;
+        orb_feed(orb, 0);
+      }
+
+      hl_orbs[idx] = -1;
+      return 1;
+    } else if (strcmp(args[1], "info") == 0) {
+      for (; idx < 10; idx++) {
+        if (hl_orbs[idx] != -1)
+          printf("highlight %d: orb%d\n", idx, hl_orbs[idx]);
+      }
+      return 1;
+    } else {
+      GET_ORB_FAIL(orb, args[1]);
+    }
+  } else {
+    ORB_SEL_FAIL;
+    orb = current_orb;
+  }
+
+  while (hl_orbs[idx] != -1 && idx++ < 10);
+  FAIL(idx > 9, "cannot highlight more than 10 orbs\n");
+
+  hl_orbs[idx] = orb->id;
+  orb->body = '0' + idx;
+  orb->highlight = 1;
+  printf("highlight %d: orb%d\n", idx, hl_orbs[idx]);
+
   return 1;
 }
 
 static int orbs_cmd_ls_orb(char* arg) {
-
-  // get orb
-  orb_t* orb = str2orb(arg);
-
-  if (orb != NULL) {
-    printf("%8p  ->  map/%s/ @ [%2d, %2d]\n", orb, arg, orb->x, orb->y);
-    print_orb_status(orb);
-    return 1;
-  }
-
-  printf("no such orb: %s\n", arg);
+  orb_t* orb;
+  GET_ORB_FAIL(orb, arg);
+  print_orb_status(orb);
   return 1;
+
 }
 
 static int orbs_cmd_ls_map(void) {
@@ -200,12 +236,9 @@ static int orbs_cmd_cd(char** args) {
   else if (strcmp(args[1], "..") == 0) {
     current_orb = NULL;
   } else {
-    orb_t* orb = str2orb(args[1]);
-
-    if (orb == NULL)
-      printf("no such orb: %s\n", args[1]);
-    else
-      current_orb = orb;
+    orb_t* orb;
+    GET_ORB_FAIL(orb, args[1]);
+    current_orb = orb;
   }
 
   return 1;
@@ -221,6 +254,8 @@ static const char* orbs_command_strs[] = {
   "cd",
   "p",
   "s",
+  "h",
+  "highlight",
   "disas",
   "c"
 };
@@ -231,6 +266,8 @@ static int (*orbs_command_funcs[])(char**) = {
   &orbs_cmd_cd,
   &orbs_cmd_p,
   &orbs_cmd_s,
+  &orbs_cmd_highlight,
+  &orbs_cmd_highlight,
   &orbs_cmd_disas,
   &orbs_cmd_c
 };
