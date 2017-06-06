@@ -28,6 +28,13 @@ void      update_map(map_t* map);
 void      draw_map(map_t* map);
 void      free_map(void* map);
 
+static inline char* map_buffer(map_t* map, int other) {
+  if (other)
+    return map->buffer[map->buffer_idx];
+  else
+    return map->buffer[map->buffer_idx ^ 0x1];
+}
+
 #define pos(x, y) ((x) + ((y)*W))
 #define wrap(x, max, min) ((x) >= max ? min : ((x) < min ? max-1 : (x)))
 

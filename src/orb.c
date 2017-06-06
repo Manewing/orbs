@@ -133,8 +133,7 @@ void orb_live(orb_t* orb, map_t* map) {
             orb->status |= (1 << r2) | ORB_ZF;
           }
         } else {
-          int buffer_idx = map->buffer_idx ^ 0x1;
-          if (map->buffer[buffer_idx][pos(_x, _y)] == _t)
+          if (map_buffer(map, 1)[pos(_x, _y)] == _t)
             orb->status |= (1 << r2) | ORB_ZF;
         }
 

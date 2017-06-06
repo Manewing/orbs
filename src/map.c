@@ -54,7 +54,7 @@ void map_update_orb(map_t* map, orb_t* orb) {
   }
 
   // draw orb to buffer
-  map->buffer[map->buffer_idx][pos(orb->x, orb->y)] = orb->body;
+  map_buffer(map, 0)[pos(orb->x, orb->y)] = orb->body;
 }
 
 void map_spawn_food(map_t* map) {
@@ -86,7 +86,7 @@ void update_map(map_t* map) {
   map->buffer_idx ^= 0x1;
 
   // copy data to buffer
-  memcpy(map->buffer[map->buffer_idx], map->data, W*H);
+  memcpy(map_buffer(map, 0), map->data, W*H);
 
   // update orbs
   node_t* node = map->orbs.head;
@@ -145,14 +145,14 @@ void update_map(map_t* map) {
 
 void draw_map(map_t* map) {
   // update map info
-  int n = sprintf(map->buffer[map->buffer_idx],
+  int n = sprintf(map_buffer(map, 0),
       "[ORBS][0x%x] %d Hz, # %6ld: Orbs: %ld, FR: %d, MR: %d",
       global_config.seed, global_config.herz, map->iteration, map->orbs.size,
       global_config.food_rate, global_config.orb_mutation);
-  map->buffer[map->buffer_idx][n] = ' ';
+  map_buffer(map, 0)[n] = ' ';
 
   printf(reset_str);
-  printf("%s", map->buffer[map->buffer_idx]);
+  printf("%s", map_buffer(map, 0));
 }
 
 void free_map(void* map) {
