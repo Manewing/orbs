@@ -82,6 +82,12 @@ static void print_orb_status(orb_t* orb) {
   printf("  [Idx]    : 0x%02x\n", orb->idx);
 }
 
+static void print_map_status(map_t* map) {
+  printf("%8p  ->  map/\n", &map->orbs);
+  printf("  [Iter]   : 0x%lx\n", map->iteration);
+  printf("  [Orbs]   : %ld\n", map->orbs.size);
+}
+
 static orb_t * current_orb = NULL;
 
 static int print_orb_disas_instr(orb_t* orb, int idx) {
@@ -101,7 +107,7 @@ static int print_orb_disas_instr(orb_t* orb, int idx) {
 
 static int orbs_cmd_disas(char** args) {
   ORB_SEL_FAIL;
-  printf("%p -> genes @ map/%s/\n", current_orb, args[1]);
+  printf("%p -> genes @ map/orb%d/\n", current_orb, current_orb->id);
 
   int idx = 0;
   while (idx < ORB_GENE_SIZE) {
@@ -116,8 +122,21 @@ static int orbs_cmd_disas(char** args) {
 }
 
 static int orbs_cmd_p(char** args) {
-  ORB_SEL_FAIL;
-  print_orb_status(current_orb);
+
+  orb_t* orb = NULL;
+
+  if (args[1] == NULL && current_orb == NULL) {
+    print_map_status(map);
+    return 1;
+  } else if (args[1] != NULL) {
+    GET_ORB_FAIL(orb, args[1]);
+  } else {
+    ORB_SEL_FAIL;
+    orb = current_orb;
+  }
+
+  print_orb_status(orb);
+
   return 1;
 }
 
@@ -186,14 +205,6 @@ static int orbs_cmd_highlight(char** args) {
   return 1;
 }
 
-static int orbs_cmd_ls_orb(char* arg) {
-  orb_t* orb;
-  GET_ORB_FAIL(orb, arg);
-  print_orb_status(orb);
-  return 1;
-
-}
-
 static int orbs_cmd_ls_map(void) {
   printf("%8p  ->  map/\n", &map->orbs);
 
@@ -209,25 +220,39 @@ static int orbs_cmd_ls_map(void) {
   return 1;
 }
 
+static int orbs_cmd_ls_orb(orb_t* orb) {
+  int l, idx = orb->idx - 4;
+
+  printf("%8p  ->  map/orb%d/ @ [%2d, %2d]\n", orb, orb->id, orb->x, orb->y);
+
+  for (l = 0; l < 9; l++) {
+    int _idx = (idx+l) & 0xff;
+
+    if (_idx == orb->idx)
+      printf(" -> ");
+    else
+      printf("    ");
+
+    print_orb_disas_instr(orb, _idx);
+  }
+
+  return 1;
+}
+
 static int orbs_cmd_ls(char** args) {
+
+  orb_t* orb = NULL;
+
   if (args[1] == NULL && current_orb == NULL)
     return orbs_cmd_ls_map();
-  else if (args[1] != NULL)
-    return orbs_cmd_ls_orb(args[1]);
-  else {
-    int l, idx = current_orb->idx - 4;
-    for (l = 0; l < 9; l++) {
-      int _idx = (idx+l) & 0xff;
-
-      if (_idx == current_orb->idx)
-        printf(" -> ");
-      else
-        printf("    ");
-
-      print_orb_disas_instr(current_orb, _idx);
-    }
-    return 1;
+  else if (args[1] != NULL) {
+    GET_ORB_FAIL(orb, args[1]);
+  } else {
+    ORB_SEL_FAIL;
+    orb = current_orb;
   }
+
+  return orbs_cmd_ls_orb(orb);
 }
 
 static int orbs_cmd_cd(char** args) {
