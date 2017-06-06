@@ -7,7 +7,7 @@
 #include "mm.h"
 #include "config.h"
 
-#define rand_char       (rand() % 256)
+#define rand_char       (rand() & 0xff)
 #define rand_mutation   (rand() % global_config.orb_mutation == 1)
 
 static struct mm* orb_mm = NULL;
@@ -43,7 +43,7 @@ orb_t* reset_orb(orb_t* orb) {
   orb->y       = rand() % H;
 
   // initialize score
-  orb->ttl     = 0xffff;
+  orb->ttl     = global_config.orb_ttl;
   orb->score   = global_config.orb_score;
   orb->body    = global_config.orb_bodies[0];
 
@@ -84,13 +84,16 @@ void orb_live(orb_t* orb, map_t* map) {
         char _d;
 
         if (instr & 0x10) {
-          _d = r1 & 0x3;
+          _d = r1;
         } else {
           _d = orb->regs[r1] & 0x3;
         }
 
         orb->x = wrap(orb->x + dirs[_d][0], W, 0);
         orb->y = wrap(orb->y + dirs[_d][1], H, 0);
+
+        // acting costs more
+        orb->score--;
 
       } break;
     case 0x1:
@@ -109,6 +112,9 @@ void orb_live(orb_t* orb, map_t* map) {
         if (r1 != 0x0)
           orb->status &= 0xf;
 
+        // acting costs more
+        orb->score--;
+
       } break;
     case 0x2:
       {
@@ -120,33 +126,39 @@ void orb_live(orb_t* orb, map_t* map) {
         char _t = types[r1 & 0x3];
 
         orb->status &= 0xf0;
-        if (map->data[pos(_x, _y)] == _t)
-          orb->status |= (1 << r2);
+        orb->status &= ~ORB_ZF;
+
+        if (_t == '+' || _t == '#') {
+          if (map->data[pos(_x, _y)] == _t) {
+            orb->status |= (1 << r2) | ORB_ZF;
+          }
+        } else {
+          int buffer_idx = map->buffer_idx ^ 0x1;
+          if (map->buffer[buffer_idx][pos(_x, _y)] == _t)
+            orb->status |= (1 << r2) | ORB_ZF;
+        }
 
       } break;
     case 0xB:
       {
-        // sense
+        // sense food
         // r1r2 1011
         orb->status &= ~ORB_ZF;
 
-        int l;
+        int l = 0;
+        int dist = (r2 == 0 || r2 == 2) ? W : H;
 
-        if (r2 & 0x1) {
-          for (l = 0; l < W; l++) {
-            if (map->data[pos(l, orb->y)] != ' ') {
+        int _x = orb->x;
+        int _y = orb->y;
+        for (; l < dist; l++) {
+          _x = wrap(_x + dirs[r2][0], W, 0);
+          _y = wrap(_y + dirs[r2][1], H, 0);
+
+          char _at = map->data[pos(_x, _y)];
+          if (_at != ' ') {
               orb->status |= ORB_ZF;
-              orb->regs[r1] = l < orb->x ? 0 : 2;
+              orb->regs[r1] = (_at == '+') ? 0 : 1;
               break;
-            }
-          }
-        } else {
-          for (l = 0; l < H; l++) {
-            if (map->data[pos(orb->x, l)] != ' ') {
-              orb->status |= ORB_ZF;
-              orb->regs[r1] = l < orb->y ? 0 : 2;
-              break;
-            }
           }
         }
 
@@ -238,9 +250,9 @@ void orb_live(orb_t* orb, map_t* map) {
         // stat
         // xxxx 1000
 
+        orb->status &= ~ORB_ZF;
         if ((instr >> 4) == (orb->status & 0xf))
             orb->status |= ORB_ZF;
-        orb->status &= ~0xf;
 
       } break;
     case 0x9:
@@ -274,12 +286,6 @@ void orb_live(orb_t* orb, map_t* map) {
 
       } break;
   }
-
-  if (rand_mutation) {
-    int idx = rand() & ORB_GENE_MASK;
-    orb->genes[idx] = rand_char;
-  }
-
 
   if (!jmp)
     orb->idx = (orb->idx + 1) & ORB_GENE_MASK;
@@ -326,7 +332,7 @@ void orb_mutate(orb_t* orb) {
   // randomly mutate some of the genes
   for (; l < ORB_GENE_SIZE; l++) {
     if (rand_mutation)
-      orb->genes[l] = rand_char;
+      orb->genes[l] ^= rand_char;
   }
 
 }

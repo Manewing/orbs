@@ -10,7 +10,8 @@ struct orb_t;
 
 typedef struct map_t {
   size_t  iteration;
-  char    buffer[W*H + 1];
+  int     buffer_idx;
+  char    buffer[2][W*H + 1];
   char    data[W*H + 1];
   list_t  orbs;
 } map_t;
