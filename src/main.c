@@ -79,6 +79,8 @@ static void orbs_state_change(orbs_state_t state) {
 
 static void* input(void* ptr);
 
+map_t* map = NULL;
+
 int main(int argc, char* argv[]) {
   int l;
 
@@ -89,7 +91,7 @@ int main(int argc, char* argv[]) {
   srand(global_config.seed);
 
   // create map
-  map_t* map = create_map();
+  map = create_map();
 
   // create orbs
   for (l = 0; l < global_config.orb_count; l++) {
@@ -181,9 +183,55 @@ static char** orbs_shell_split_args(char* line) {
 }
 
 
-static int orbs_cmd_ls(char** args) {
-  printf("ls\n");
+static int orbs_cmd_ls_orb(char* arg) {
+
+  if (strlen(arg) > 3) {
+    int id = atoi(arg + 3);
+
+    node_t* node = map->orbs.head;
+    while (node) {
+      orb_t* orb = node->data;
+
+      if (orb->id == id) {
+        printf("%8p  ->  map/%s/ @ [%2d, %2d]\n", orb, arg, orb->x, orb->y);
+        printf("  [Score]  : %d\n", orb->score);
+        printf("  [TTL]    : %d\n", orb->ttl);
+        printf("  [Status] : 0x%02x\n", orb->status);
+        printf("  [Regs]   : r0: 0x%02x, r1: 0x%02x, r2: 0x%02x, r3: 0x%02x\n",
+            orb->regs[0], orb->regs[1], orb->regs[2], orb->regs[3]);
+        printf("  [LR]     : 0x%02x\n", orb->lr);
+        printf("  [Idx]    : 0x%02x\n", orb->idx);
+        return 1;
+      }
+
+      node = node->next;
+    }
+  }
+
+  printf("no such orb: %s\n", arg);
   return 1;
+}
+
+static int orbs_cmd_ls_map(void) {
+  printf("%8p  ->  map/\n", &map->orbs);
+
+  int idx = 0;
+  node_t* node = map->orbs.head;
+  while (node) {
+    orb_t* orb = node->data;
+    printf("    %8p  ->  orb%d\n", orb, orb->id);
+    node = node->next;
+  }
+
+  printf("total %ld\n", map->orbs.size);
+  return 1;
+}
+
+static int orbs_cmd_ls(char** args) {
+  if (args[1] == NULL || strcmp(args[1], "map") == 0)
+    return orbs_cmd_ls_map();
+  else
+    return orbs_cmd_ls_orb(args[1]);
 }
 
 static int orbs_cmd_exit(char** args) {
