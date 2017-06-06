@@ -275,6 +275,7 @@ void orb_live(orb_t* orb, map_t* map) {
             orb->idx = orb->regs[r2];
             break;
           case 0x3:
+            orb->lr = orb->regs[r2];
             break;
          }
 
@@ -282,10 +283,12 @@ void orb_live(orb_t* orb, map_t* map) {
     case 0xA:
       {
         // return
-        // 0000 1010
+        // ccxx 1010
 
-        orb->idx = orb->lr;
-        jmp = 1;
+        if (r1 == 0x0 || r1 == ((orb->status >> 4) & 0x3)) {
+          orb->idx = orb->lr;
+          jmp = 1;
+        }
 
       } break;
   }
@@ -438,7 +441,7 @@ int orb_disas(orb_t* orb, int idx, char buffer[64]) {
             sprintf(buffer, "store\tidx,\tr%d", r2);
             break;
           case 0x3:
-            sprintf(buffer, "nop");
+            sprintf(buffer, "store\tlr,\tr%d", r2);
             break;
          }
 
@@ -446,9 +449,12 @@ int orb_disas(orb_t* orb, int idx, char buffer[64]) {
     case 0xA:
       {
         // return
-        // 0000 1010
+        // cc00 1010
 
-        sprintf(buffer, "ret");
+        int _n = sprintf(buffer, "ret\t\t");
+
+        if (r1 != 0x0)
+          sprintf(buffer + _n, "\tif status & 0x%x0", r1);
 
       } return 1;
   }
