@@ -27,6 +27,8 @@ typedef struct orb_t {
   int     lr;
   int     idx;
   char    genes[ORB_GENE_SIZE];
+
+  int     id;
 } orb_t;
 
 

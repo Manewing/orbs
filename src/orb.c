@@ -12,6 +12,8 @@
 
 static struct mm* orb_mm = NULL;
 
+static int orb_id = 0;
+
 orb_t* create_orb(void) {
 
   // check if orb memory manager is initialized
@@ -20,6 +22,9 @@ orb_t* create_orb(void) {
 
   // create new orb and reset it
   orb_t* orb = (orb_t*)mm_elem_create(orb_mm);
+
+  // set orb id
+  orb->id = orb_id++;
 
   // reset orb
   reset_orb_genes(orb);
