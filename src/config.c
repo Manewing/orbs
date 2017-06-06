@@ -6,6 +6,7 @@ config_t global_config = {
   .herz               =    201,
   .orb_count          =     80,
   .orb_score          =   1500,
+  .orb_ttl            = 0xffff,
   .orb_mutation       =  10000,
   .orb_bodies         = {  '.',  'o',  'O' },
   .orb_scores         = { 2000, 4000, 8000 },

@@ -8,6 +8,7 @@ typedef struct {
 
   int   orb_count;
   int   orb_score;
+  int   orb_ttl;
   int   orb_mutation;
   char  orb_bodies[3];
   int   orb_scores[3];
