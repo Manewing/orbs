@@ -182,30 +182,39 @@ static char** orbs_shell_split_args(char* line) {
   return args;
 }
 
-
-static int orbs_cmd_ls_orb(char* arg) {
-
-  if (strlen(arg) > 3) {
-    int id = atoi(arg + 3);
+static orb_t* str2orb(char* str) {
+  if (strlen(str) > 3) {
+    int id = atoi(str + 3);
 
     node_t* node = map->orbs.head;
     while (node) {
       orb_t* orb = node->data;
 
-      if (orb->id == id) {
-        printf("%8p  ->  map/%s/ @ [%2d, %2d]\n", orb, arg, orb->x, orb->y);
-        printf("  [Score]  : %d\n", orb->score);
-        printf("  [TTL]    : %d\n", orb->ttl);
-        printf("  [Status] : 0x%02x\n", orb->status);
-        printf("  [Regs]   : r0: 0x%02x, r1: 0x%02x, r2: 0x%02x, r3: 0x%02x\n",
-            orb->regs[0], orb->regs[1], orb->regs[2], orb->regs[3]);
-        printf("  [LR]     : 0x%02x\n", orb->lr);
-        printf("  [Idx]    : 0x%02x\n", orb->idx);
-        return 1;
-      }
+      if (orb->id == id)
+        return orb;
 
       node = node->next;
     }
+  }
+
+  return NULL;
+}
+
+static int orbs_cmd_ls_orb(char* arg) {
+
+  // get orb
+  orb_t* orb = str2orb(arg);
+
+  if (orb != NULL) {
+    printf("%8p  ->  map/%s/ @ [%2d, %2d]\n", orb, arg, orb->x, orb->y);
+    printf("  [Score]  : %d\n", orb->score);
+    printf("  [TTL]    : %d\n", orb->ttl);
+    printf("  [Status] : 0x%02x\n", orb->status);
+    printf("  [Regs]   : r0: 0x%02x, r1: 0x%02x, r2: 0x%02x, r3: 0x%02x\n",
+        orb->regs[0], orb->regs[1], orb->regs[2], orb->regs[3]);
+    printf("  [LR]     : 0x%02x\n", orb->lr);
+    printf("  [Idx]    : 0x%02x\n", orb->idx);
+    return 1;
   }
 
   printf("no such orb: %s\n", arg);
@@ -234,17 +243,49 @@ static int orbs_cmd_ls(char** args) {
     return orbs_cmd_ls_orb(args[1]);
 }
 
+static int orbs_cmd_disas(char** args) {
+  orb_t* orb = str2orb(args[1]);
+
+  if (orb != NULL) {
+    printf("%p -> genes @ map/%s/\n", orb, args[1]);
+
+    int idx = 0;
+    char buffer[64];
+    while (idx < ORB_GENE_SIZE) {
+      int n = orb_disas(orb, idx, buffer);
+
+      if (strcmp(buffer, "nop") == 0)
+        printf("\e[37m");
+
+      if (idx == orb->idx)
+        printf(" -> ");
+      else
+        printf("    ");
+
+      printf("[0x%02x]: 0x%02x %s\n\e[39m", idx, orb->genes[idx], buffer);
+      idx += n;
+    }
+
+    return 1;
+  }
+
+  printf("no such orb: %s\n", args[1]);
+  return 1;
+}
+
 static int orbs_cmd_exit(char** args) {
   return 0;
 }
 
 static const char* orbs_command_strs[] = {
   "ls",
+  "disas",
   "exit"
 };
 
 static int (*orbs_command_funcs[])(char**) = {
   &orbs_cmd_ls,
+  &orbs_cmd_disas,
   &orbs_cmd_exit
 };
 

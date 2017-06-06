@@ -128,7 +128,7 @@ void orb_live(orb_t* orb, map_t* map) {
         // ttxx 0010
         int _x = wrap(orb->x + dirs[r2][0], W, 0);
         int _y = wrap(orb->y + dirs[r2][1], H, 0);
-        char _t = types[r1 & 0x3];
+        char _t = types[r1];
 
         orb->status &= 0xf0;
         orb->status &= ~ORB_ZF;
@@ -176,7 +176,7 @@ void orb_live(orb_t* orb, map_t* map) {
         //
         if (r1 == 0x0 || r1 == ((orb->status >> 4) & 0x3)) {
 
-          int _of = orb->genes[orb->idx+1];
+          int _of = orb->genes[(orb->idx+1) & ORB_GENE_MASK];
 
           if (instr & 0x10)
             _of = -_of;
@@ -275,7 +275,6 @@ void orb_live(orb_t* orb, map_t* map) {
             orb->idx = orb->regs[r2];
             break;
           case 0x3:
-            orb->regs[r2] = orb->regs[r1];
             break;
          }
 
@@ -300,6 +299,161 @@ void orb_live(orb_t* orb, map_t* map) {
   }
 
   map_update_orb(map, orb);
+}
+
+int orb_disas(orb_t* orb, int idx, char buffer[64]) {
+  uint8_t instr = orb->genes[idx];
+  int r1 = (instr >> 6) & 0x3;
+  int r2 = (instr >> 4) & 0x3;
+
+  static const char* dirs[] = { "right", "down", "left", "up" };
+  static const char* types[] = { "'o'", "'O'", "'+'", "'#'" };
+
+  switch (instr & 0xF) {
+    default:
+      sprintf(buffer, "nop");
+      return 1;
+    case 0x0:
+      {
+
+        // act
+        // dd0x 0000
+        if (instr & 0x10)
+          sprintf(buffer, "act\tdir[r%d]", r1);
+        else
+          sprintf(buffer, "act\t%s", dirs[r1]);
+
+      } return 1;
+    case 0x1:
+      {
+
+        // act
+        // ccdd 0001
+        int _n = sprintf(buffer, "act\t%s", dirs[r2]);
+
+        if (r1 != 0x0)
+          sprintf(buffer + _n, "\t\tif status & 0x%x0", r1);
+
+      } return 1;
+    case 0x2:
+      {
+
+        // sense
+        // ttxx 0010
+        sprintf(buffer, "sense\t%s,\t%s", dirs[r2], types[r1]);
+
+      } return 1;
+    case 0xB:
+      {
+        // sense food
+        // r1r2 1011
+
+        sprintf(buffer, "sense\t%s,\tr%d", dirs[r2], r1);
+
+      } return 1;
+    case 0x3:
+      {
+
+        // jmp
+        // cclx 0011
+        // yyyy yyyy
+
+        int _of = orb->genes[(orb->idx+1) & ORB_GENE_MASK];
+        if (instr & 0x10)
+          _of = -_of;
+
+        int _idx = (idx + _of) & ORB_GENE_MASK;
+        char _l = (instr & 0x20) ? 'l' : ' ';
+
+        int _n = sprintf(buffer, "jmp%c\t0x%02x", _l, _idx);
+
+        if (r1 != 0x0)
+          sprintf(buffer + _n, "\t\tif status & 0x%x0", r1);
+
+      } return 2;
+    case 0x4:
+      {
+
+        // mov
+        // r1r2 0100
+        // vvvv vvvv (C)
+
+        if (r1 == r2) {
+          int _imm = orb->genes[(orb->idx+1) & ORB_GENE_MASK];
+          sprintf(buffer, "mov\tr%d,\t0x%02x", r1, _imm);
+          return 2;
+        } else {
+          sprintf(buffer, "mov\tr%d,\tr%d", r1, r2);
+          return 1;
+        }
+
+      }
+    case 0x5:
+      {
+
+        // add
+        // r1r2 0101
+
+        sprintf(buffer, "add\tr%d,\tr%d", r1, r2);
+
+      } return 1;
+    case 0x6:
+      {
+
+        // sub
+        // r1r2 0110
+
+        sprintf(buffer, "sub\tr%d,\tr%d", r1, r2);
+
+      } return 1;
+    case 0x7:
+      {
+        // inc/dec
+        // r10x 0111
+
+        sprintf(buffer, "%s\tr%d", (instr & 0x10) ? "inc" : "dec", r1);
+
+      } return 1;
+    case 0x8:
+      {
+        // stat
+        // xxxx 1000
+
+        sprintf(buffer, "stat\t0x%x", (instr >> 4));
+
+      } break;
+    case 0x9:
+      {
+        // load/store
+        // r1r2 1001
+
+        switch (r1) {
+          case 0x0:
+            sprintf(buffer, "load\tr%d,\tstatus", r2);
+            break;
+          case 0x1:
+            sprintf(buffer, "load\tr%d,\tscore", r2);
+            break;
+          case 0x2:
+            sprintf(buffer, "store\tidx,\tr%d", r2);
+            break;
+          case 0x3:
+            sprintf(buffer, "nop");
+            break;
+         }
+
+      } return 1;
+    case 0xA:
+      {
+        // return
+        // 0000 1010
+
+        sprintf(buffer, "ret");
+
+      } return 1;
+  }
+
+  return 1;
 }
 
 void orb_feed(orb_t* orb, char food) {

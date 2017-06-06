@@ -3,6 +3,8 @@
 
 #include "map.h"
 
+#include <stdint.h>
+
 // status flags
 #define ORB_RF 0x01
 #define ORB_DF 0x02
@@ -15,20 +17,20 @@
 #define ORB_GENE_MASK   0xFF
 
 typedef struct orb_t {
-  int     x;
-  int     y;
+  int      x;
+  int      y;
 
-  char    body;
-  int     score;
-  int     ttl;
+  char     body;
+  int      score;
+  int      ttl;
 
-  char    status;
-  char    regs[4];
-  int     lr;
-  int     idx;
-  char    genes[ORB_GENE_SIZE];
+  uint8_t  status;
+  uint8_t  regs[4];
+  int      lr;
+  int      idx;
+  uint8_t  genes[ORB_GENE_SIZE];
 
-  int     id;
+  int      id;
 } orb_t;
 
 
@@ -37,6 +39,7 @@ orb_t*    reset_orb(orb_t* orb);
 orb_t*    reset_orb_genes(orb_t* orb);
 
 void      orb_live(orb_t* orb, map_t* map);
+int       orb_disas(orb_t* orb, int idx, char buffer[64]);
 void      orb_feed(orb_t* orb, char food);
 void      orb_die(orb_t* orb, map_t* map);
 
