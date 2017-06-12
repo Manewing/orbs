@@ -273,32 +273,36 @@ static int orbs_cmd_c(char** args) {
   return 0;
 }
 
-static const char* orbs_command_strs[] = {
-  "ls",
-  "l",
-  "cd",
-  "p",
-  "s",
-  "h",
-  "highlight",
-  "disas",
-  "c"
+struct orbs_command {
+  const char* cmd;
+  const char* help;
+  int (*command_func)(char**);
 };
 
-static int (*orbs_command_funcs[])(char**) = {
-  &orbs_cmd_ls,
-  &orbs_cmd_ls,
-  &orbs_cmd_cd,
-  &orbs_cmd_p,
-  &orbs_cmd_s,
-  &orbs_cmd_highlight,
-  &orbs_cmd_highlight,
-  &orbs_cmd_disas,
-  &orbs_cmd_c
+static int orbs_cmd_help(char** args);
+
+static struct orbs_command orbs_commands[] = {
+  { "l", "lists (sub) entities of entity, disassembly if entity is an orb", &orbs_cmd_ls},
+  { "cd", "change/select entity (like cd in shell)", &orbs_cmd_cd },
+  { "p", "print status of entity", &orbs_cmd_p },
+  { "hl", "highlight a given orb, rm for removing, info for listing highlight", &orbs_cmd_highlight},
+  { "s", "single step currently selected orb", &orbs_cmd_s },
+  { "disas", "print disassembly of genes of selected orb", &orbs_cmd_disas },
+  { "c", "continue simulation", &orbs_cmd_c },
+  { "help", "print this help screen", &orbs_cmd_help }
 };
 
-static int orbs_commands(void) {
-  return sizeof(orbs_command_strs) / sizeof(char*);
+static int orbs_command_count(void) {
+  return sizeof(orbs_commands) / sizeof(struct orbs_command);
+}
+
+static int orbs_cmd_help(char** args) {
+  int l;
+  printf("Commands:\n");
+  for (l = 0; l < orbs_command_count(); l++) {
+    printf("%10s -- %s\n", orbs_commands[l].cmd, orbs_commands[l].help);
+  }
+  return 1;
 }
 
 static int orbs_shell_execute(char** args) {
@@ -306,9 +310,9 @@ static int orbs_shell_execute(char** args) {
     return 1;
 
   int l;
-  for (l = 0; l < orbs_commands(); l++) {
-    if (strcmp(args[0], orbs_command_strs[l]) == 0)
-      return orbs_command_funcs[l](args);
+  for (l = 0; l < orbs_command_count(); l++) {
+    if (strcmp(args[0], orbs_commands[l].cmd) == 0)
+      return orbs_commands[l].command_func(args);
   }
 
   printf("unkown command: %s\n", args[0]);
