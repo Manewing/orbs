@@ -18,47 +18,36 @@ const char* argp_program_bug_address = "todo";
 static char doc[] = "ORBs cell program simulation.";
 static char args_doc[] = "";
 static struct argp_option options[] = {
-  { "seed", 'r', "SEED", 0, "Seed for srand (default = 0)" },
   { "skip", 's', "NUM", 0, "Skip first NUM iterations" },
   { "herz", 'h', "HZ", 0, "Update rate in herz" },
-  { "orbs", 'o', "ORBS", 0, "Number of orbs in initial population" },
-  { "mutate", 'm', "NUM", 0, "Rate at which mutations take place P(mutate) = (1 / NUM" },
-  { "food", 'f', "NUM", 0, "Rate at which food spawns P(food) = (1 / NUM)" },
-  { "foodscore-0", 513, "SCORE", 0, "Sets SCORE of food type 0"},
-  { "foodscore-1", 514, "SCORE", 0, "Sets SCORE of food type 1"},
+  { "config", 'f', "FILE", 0, "Configuration FILE to load"},
+  { "configure", 'c', "PARAM=VALUE", 0, "Configure a specific parameter"},
+  { "config-info", 513, NULL, 0, "Prints information about all configurable parameters." },
   {0}
 };
 
 static error_t parse_opt(int key, char* arg, struct argp_state* state) {
   config_t* config = state->input;
 
-  int type = 0;
 
   switch (key) {
-    case 'r':
-      config->seed = atoi(arg);
+    case 'c':
+      if (read_config_line(arg) != 0)
+        exit(-1);
       break;
-    case 's':
-      config->skip = atoi(arg);
+    case 'f':
+      if (read_config_file(arg) != 0)
+        exit(-1);
       break;
     case 'h':
       config->herz = atoi(arg);
       break;
-    case 'o':
-      config->orb_count = atoi(arg);
+    case 's':
+      config->skip = atoi(arg);
       break;
-    case 'm':
-      config->orb_mutation = atoi(arg);
-      break;
-    case 'f':
-      config->food_rate = atoi(arg);
-      break;
-    case 514:
-      type = 1;
     case 513:
-      {
-        config->food_scores[type] = atoi(arg);
-      }
+      print_config_options();
+      exit(0);
       break;
     default:
       return ARGP_ERR_UNKNOWN;
