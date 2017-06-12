@@ -153,12 +153,24 @@ static void disable_direct_input(void) {
   tcsetattr(STDIN_FILENO, TCSANOW, &t0);
 }
 
+static orb_t* get_orb_idx(int idx) {
+  node_t* node = map->orbs.head;
+  while (node) {
+    if (idx-- <= 0)
+      return node->data;
+    node = node->next;
+  }
+  return NULL;
+}
+
 static void* input(void* ptr) {
   (void)ptr;
 
   // enable direct input
   enable_direct_input();
 
+  int hl_idx = 0, hl_idx_l;
+  orb_t* orb;
   while (orbs_state != ST_EXIT) {
     int c = getc(stdin);
     switch (c) {
@@ -171,6 +183,28 @@ static void* input(void* ptr) {
       case 's':
         global_config.herz -= 10;
         global_config.herz = global_config.herz < 0 ? 1 : global_config.herz;
+        break;
+      case 'a':
+        hl_idx_l = hl_idx;
+        hl_idx = --hl_idx < 0 ? 0 : hl_idx;
+        orb = get_orb_idx(hl_idx_l);
+        if (orb)
+          orb_feed(orb, 0);
+        orb = get_orb_idx(hl_idx);
+        if (orb)
+          orb->body = 'X';
+        printf("orb%d", orb->id);
+        break;
+      case 'd':
+        hl_idx_l = hl_idx;
+        hl_idx = ++hl_idx > map->orbs.size ? map->orbs.size-1 : hl_idx;
+        orb = get_orb_idx(hl_idx_l);
+        if (orb)
+          orb_feed(orb, 0);
+        orb = get_orb_idx(hl_idx);
+        if (orb)
+          orb->body = 'X';
+        printf("orb%d", orb->id);
         break;
       case 'p':
         disable_direct_input();
