@@ -91,7 +91,7 @@ static void print_orb_status(orb_t* orb) {
       orb->regs[0], orb->regs[1], orb->regs[2], orb->regs[3]);
   printf("  [LR]     : 0x%02x\n", orb->lr);
   printf("  [Idx]    : 0x%02x\n", orb->idx);
-  printf("  [IU]     : %.2f %%\n", calc_orb_instr_usage(orb));
+  printf("  [IMU]    : %.2f %%\n", calc_orb_instr_usage(orb));
 }
 
 static void print_map_status(map_t* map) {
@@ -113,7 +113,8 @@ static int print_orb_disas_instr(orb_t* orb, int idx) {
     printf("\e[37m");
 
   printf("%*s [ %6.2f%% ]\r", 60, " ", 100.0*orb->trace[idx]/orb->trace_count);
-  printf("[0x%02x]: 0x%02x %s\n\e[39m", idx, orb->genes[idx], buffer);
+  printf("%s[0x%02x]: 0x%02x %s\n\e[39m", orb->idx == idx ? " -> " : "    ",
+      idx, orb->genes[idx], buffer);
 
   return n;
 }
@@ -135,10 +136,6 @@ static int orbs_cmd_disas(char** args) {
       continue;
     }
 
-    if (idx == current_orb->idx)
-      printf(" -> ");
-    else
-      printf("    ");
     idx += print_orb_disas_instr(current_orb, idx);
   }
 
@@ -151,6 +148,15 @@ static int orbs_cmd_p(char** args) {
 
   if (args[1] == NULL && current_orb == NULL) {
     print_map_status(map);
+    return 1;
+  } else if (args[1] != NULL && strcmp(args[1], "*") == 0) {
+    FAIL(current_orb != NULL, "option '*' not allowed for orb\n");
+    node_t* node = map->orbs.head;
+    while (node) {
+      orb_t* orb = node->data;
+      print_orb_status(orb);
+      node = node->next;
+    }
     return 1;
   } else if (args[1] != NULL) {
     GET_ORB_FAIL(orb, args[1]);
