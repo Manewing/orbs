@@ -52,6 +52,10 @@ orb_t* reset_orb(orb_t* orb) {
   orb->score   = global_config.orb_score;
   orb->body    = global_config.orb_bodies[0];
 
+  // reset trace
+  orb->trace_count = 0;
+  memset(orb->trace, 0, sizeof(orb->trace));
+
   return orb;
 }
 
@@ -70,6 +74,9 @@ void orb_live(orb_t* orb, map_t* map) {
   int r1 = (instr >> 6) & 0x3;
   int r2 = (instr >> 4) & 0x3;
   int jmp = 0;
+
+  orb->trace[orb->idx]++;
+  orb->trace_count++;
 
   //    3
   //  2 O 0

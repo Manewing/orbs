@@ -71,6 +71,17 @@ static orb_t* str2orb(char* str) {
   return NULL;
 }
 
+static float calc_orb_instr_usage(orb_t* orb) {
+  int idx = 0, count = 0;
+
+  while (idx < ORB_GENE_SIZE) {
+    count += ((float)orb->trace[idx]/orb->trace_count < .0001 ? 0 : 1);
+    idx++;
+  }
+
+  return 100.0*count/ORB_GENE_SIZE;
+}
+
 static void print_orb_status(orb_t* orb) {
   printf("%8p  ->  map/orb%d/ @ [%2d, %2d]\n", orb, orb->id, orb->x, orb->y);
   printf("  [Score]  : %d\n", orb->score);
@@ -80,6 +91,7 @@ static void print_orb_status(orb_t* orb) {
       orb->regs[0], orb->regs[1], orb->regs[2], orb->regs[3]);
   printf("  [LR]     : 0x%02x\n", orb->lr);
   printf("  [Idx]    : 0x%02x\n", orb->idx);
+  printf("  [IU]     : %.2f %%\n", calc_orb_instr_usage(orb));
 }
 
 static void print_map_status(map_t* map) {
@@ -100,6 +112,7 @@ static int print_orb_disas_instr(orb_t* orb, int idx) {
   if (strcmp(buffer, "nop") == 0)
     printf("\e[37m");
 
+  printf("%*s [ %6.2f%% ]\r", 60, " ", 100.0*orb->trace[idx]/orb->trace_count);
   printf("[0x%02x]: 0x%02x %s\n\e[39m", idx, orb->genes[idx], buffer);
 
   return n;
@@ -109,8 +122,19 @@ static int orbs_cmd_disas(char** args) {
   ORB_SEL_FAIL;
   printf("%p -> genes @ map/orb%d/\n", current_orb, current_orb->id);
 
+  int nodeadcode = 0;
+  if (args[1] != NULL && strcmp(args[1], "ndc") == 0)
+    nodeadcode = 1;
+
   int idx = 0;
   while (idx < ORB_GENE_SIZE) {
+
+    int dead = (float)current_orb->trace[idx]/current_orb->trace_count < .0001;
+    if(nodeadcode && dead) {
+      idx++;
+      continue;
+    }
+
     if (idx == current_orb->idx)
       printf(" -> ");
     else
@@ -287,7 +311,7 @@ static struct orbs_command orbs_commands[] = {
   { "p", "print status of entity", &orbs_cmd_p },
   { "hl", "highlight a given orb, rm for removing, info for listing highlight", &orbs_cmd_highlight},
   { "s", "single step currently selected orb", &orbs_cmd_s },
-  { "disas", "print disassembly of genes of selected orb", &orbs_cmd_disas },
+  { "disas", "print disassembly of genes of selected orb, use 'disas ndc' to skip deadcode", &orbs_cmd_disas },
   { "c", "continue simulation", &orbs_cmd_c },
   { "help", "print this help screen", &orbs_cmd_help }
 };

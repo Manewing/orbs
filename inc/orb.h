@@ -30,6 +30,9 @@ typedef struct orb_t {
   int      idx;
   uint8_t  genes[ORB_GENE_SIZE];
 
+  int      trace[ORB_GENE_SIZE];
+  int      trace_count;
+
   int      id;
   int      highlight;
 } orb_t;
