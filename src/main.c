@@ -62,9 +62,40 @@ static struct argp argp = { options, parse_opt, args_doc, doc };
 typedef enum { ST_EXIT, ST_RUNNING, ST_PAUSED } orbs_state_t;
 static orbs_state_t orbs_state, orbs_request;
 
+static pthread_mutex_t orbs_state_mtx;
+static pthread_cond_t orbs_state_cond;
+
+static void orbs_state_init(void) {
+  orbs_state = ST_RUNNING;
+  orbs_request = ST_RUNNING;
+  pthread_cond_init(&orbs_state_cond, NULL);
+  pthread_mutex_init(&orbs_state_mtx, NULL);
+}
+
 static void orbs_state_change(orbs_state_t state) {
+  pthread_mutex_lock(&orbs_state_mtx);
   orbs_request = state;
+  pthread_cond_signal(&orbs_state_cond);
+  pthread_mutex_unlock(&orbs_state_mtx);
   while (orbs_state != state);
+}
+
+static void orbs_state_handle(void) {
+  pthread_mutex_lock(&orbs_state_mtx);
+  switch (orbs_request) {
+    case ST_EXIT:
+      orbs_state = ST_EXIT;
+      break;
+    case ST_PAUSED:
+      orbs_state = ST_PAUSED;
+      while (orbs_request == ST_PAUSED)
+        pthread_cond_wait(&orbs_state_cond, &orbs_state_mtx);
+      orbs_state = ST_RUNNING;
+      break;
+    default:
+      break;
+  }
+  pthread_mutex_unlock(&orbs_state_mtx);
 }
 
 static void* input(void* ptr);
@@ -95,13 +126,14 @@ int main(int argc, char* argv[]) {
     update_map(map);
   }
 
+  // setup state handling
+  orbs_state_init();
+
   // start input thread
   pthread_t input_thread;
   pthread_create(&input_thread, NULL, input, NULL);
 
   // main loop
-  orbs_state = ST_RUNNING;
-  orbs_request = ST_RUNNING;
   while (orbs_state != ST_EXIT) {
     update_map(map);
     draw_map(map);
@@ -112,13 +144,9 @@ int main(int argc, char* argv[]) {
       printf("Population died out...\n");
     }
 
-    if (orbs_request == ST_EXIT)
-      orbs_state = ST_EXIT;
-    else if (orbs_request == ST_PAUSED) {
-      orbs_state = ST_PAUSED;
-      while (orbs_request == ST_PAUSED);
-      orbs_state = ST_RUNNING;
-    }
+    // check for request and handle it
+    if (orbs_request != ST_RUNNING)
+      orbs_state_handle();
 
     usleep(Hz(global_config.herz));
   }
