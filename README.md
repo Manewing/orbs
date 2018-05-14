@@ -28,6 +28,10 @@ For a documentation of the configurable parameters run:
 
 The GNU C libraries readline and argp.
 
+```
+sudo apt-get install libreadline6-dev
+```
+
 ## Build
 
-Just run `make`.
+Just run `make`. (For Mac might be necessary to add `-largp` flag to `LIBS`).
