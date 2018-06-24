@@ -22,6 +22,7 @@ typedef struct orb_t {
 
   char     body;
   int      score;
+  int      lifetime;
   int      ttl;
 
   uint8_t  status;

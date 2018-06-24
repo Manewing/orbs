@@ -35,22 +35,23 @@ orb_t* create_orb(void) {
 orb_t* reset_orb(orb_t* orb) {
 
   // reset orb state
-  orb->idx     = 0;
-  orb->lr      = 0;
-  orb->status  = 0;
-  orb->regs[0] = 0;
-  orb->regs[1] = 0;
-  orb->regs[2] = 0;
-  orb->regs[3] = 0;
+  orb->idx      = 0;
+  orb->lr       = 0;
+  orb->status   = 0;
+  orb->regs[0]  = 0;
+  orb->regs[1]  = 0;
+  orb->regs[2]  = 0;
+  orb->regs[3]  = 0;
 
   // set random position
-  orb->x       = rand() % W;
-  orb->y       = rand() % H;
+  orb->x        = rand() % W;
+  orb->y        = rand() % H;
 
   // initialize score
-  orb->ttl     = global_config.orb_ttl;
-  orb->score   = global_config.orb_score;
-  orb->body    = global_config.orb_bodies[0];
+  orb->ttl      = global_config.orb_ttl;
+  orb->lifetime = 0;
+  orb->score    = global_config.orb_score;
+  orb->body     = global_config.orb_bodies[0];
 
   // reset trace
   orb->trace_count = 0;
@@ -303,7 +304,7 @@ void orb_live(orb_t* orb, map_t* map) {
   if (!jmp)
     orb->idx = (orb->idx + 1) & ORB_GENE_MASK;
 
-  if (orb->score-- <= 0 || orb->ttl-- <= 0) {
+  if (orb->score-- <= 0 || ++orb->lifetime >= orb->ttl) {
     orb_die(orb, map);
     return;
   }
