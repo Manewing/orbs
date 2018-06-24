@@ -22,6 +22,9 @@ extern map_t* map;
 
 static char* orbs_shell_getline(char* pref) {
   char* line = readline(pref);
+  if (!line) {
+    return NULL;
+  }
   add_history(line);
   return line;
 }
@@ -91,7 +94,7 @@ static void print_map_status(map_t* map) {
 
 static orb_t * current_orb = NULL;
 
-static int print_orb_disas_instr(orb_t* orb, int idx) {
+static int print_orb_disas_instr(orb_t const* orb, int idx) {
   int n;
   char buffer[64];
 
@@ -108,26 +111,30 @@ static int print_orb_disas_instr(orb_t* orb, int idx) {
   return n;
 }
 
-static int orbs_cmd_disas(char** args) {
-  ORB_SEL_FAIL;
-  printf("%p -> genes @ map/orb%d/\n", current_orb, current_orb->id);
-
-  int nodeadcode = 0;
-  if (args[1] != NULL && strcmp(args[1], "ndc") == 0)
-    nodeadcode = 1;
+static void do_orb_disas(orb_t const* orb, int nodeadcode) {
+  printf("%p -> genes @ map/orb%d/\n", orb, orb->id);
 
   int idx = 0;
   while (idx < ORB_GENE_SIZE) {
 
-    int dead = (float)current_orb->trace[idx]/current_orb->trace_count < .0001;
+    int dead = (float)orb->trace[idx]/orb->trace_count < .0001;
     if(nodeadcode && dead) {
       idx++;
       continue;
     }
 
-    idx += print_orb_disas_instr(current_orb, idx);
+    idx += print_orb_disas_instr(orb, idx);
   }
+}
 
+static int orbs_cmd_disas(char** args) {
+  ORB_SEL_FAIL;
+
+  int nodeadcode = 0;
+  if (args[1] != NULL && strcmp(args[1], "ndc") == 0)
+    nodeadcode = 1;
+
+  do_orb_disas(current_orb, nodeadcode);
   return 1;
 }
 
@@ -262,11 +269,27 @@ static int orbs_cmd_ls(char** args) {
 
   orb_t* orb = NULL;
 
-  if (args[1] == NULL && current_orb == NULL)
+  if (args[1] == NULL && current_orb == NULL) {
+    // map is selected, list all orbs on map
     return orbs_cmd_ls_map();
-  else if (args[1] != NULL) {
+  } else if (args[1] != NULL && !strcmp(args[1], "*") && current_orb == NULL) {
+    // map is selected, command with wildcard, call ls on all orbs
+    node_t* node = map->orbs.head;
+    while (node) {
+      orb_t* orb = node->data;
+      orbs_cmd_ls_orb(orb);
+      node = node->next;
+    }
+    return 1;
+  } else if (args[1] != NULL && !strcmp(args[1], "*") && current_orb != NULL) {
+    // an orb is selected call, command with wildcard, like disas
+    do_orb_disas(current_orb, 0);
+    return 1;
+  } else if (args[1] != NULL) {
+    // map is selected, get selected orb from argument
     GET_ORB_FAIL(orb, args[1]);
   } else {
+    // orb is selected, run command on selected orb
     ORB_SEL_FAIL;
     orb = current_orb;
   }
@@ -334,7 +357,7 @@ static int orbs_shell_execute(char** args) {
       return orbs_commands[l].command_func(args);
   }
 
-  printf("unkown command: %s\n", args[0]);
+  printf("unknown command: %s\n", args[0]);
 
   return 1;
 }
@@ -346,6 +369,9 @@ void orbs_shell(void) {
 
   char buffer[256];
 
+  // clear screen
+  printf("\033[H\033[J");
+
   do {
     int n = sprintf(buffer, "orbs/map/");
     if (current_orb != NULL)
@@ -353,10 +379,19 @@ void orbs_shell(void) {
     sprintf(buffer+n, "> ");
 
     line = orbs_shell_getline(buffer);
+
+    // check if read EOF
+    if (!line) {
+      break;
+    }
+
     args = orbs_shell_split_args(line);
     status = orbs_shell_execute(args);
 
     free(line);
     free(args);
   } while (status);
+
+  // clear screen
+  printf("\033[H\033[J");
 }

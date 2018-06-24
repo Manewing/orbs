@@ -44,7 +44,7 @@ orb_t*    reset_orb(orb_t* orb);
 orb_t*    reset_orb_genes(orb_t* orb);
 
 void      orb_live(orb_t* orb, map_t* map);
-int       orb_disas(orb_t* orb, int idx, char buffer[64]);
+int       orb_disas(orb_t const* orb, int idx, char buffer[64]);
 void      orb_feed(orb_t* orb, char food);
 void      orb_die(orb_t* orb, map_t* map);
 

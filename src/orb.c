@@ -312,7 +312,7 @@ void orb_live(orb_t* orb, map_t* map) {
   map_update_orb(map, orb);
 }
 
-int orb_disas(orb_t* orb, int idx, char buffer[64]) {
+int orb_disas(orb_t const* orb, int idx, char buffer[64]) {
   uint8_t instr = orb->genes[idx];
   int r1 = (instr >> 6) & 0x3;
   int r2 = (instr >> 4) & 0x3;
