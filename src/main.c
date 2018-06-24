@@ -111,6 +111,9 @@ void handle_exit(int sig) {
 int main(int argc, char* argv[]) {
   int l;
 
+  // clear screen
+  printf("\033[H\033[J");
+
   // parse command line arguments
   argp_parse(&argp, argc, argv, 0, 0, &global_config);
 
