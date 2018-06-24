@@ -521,6 +521,17 @@ orb_t* orb_crossover(orb_t* orb1, orb_t* orb2) {
   return new_orb;
 }
 
+float get_orb_instr_usage(orb_t const *orb) {
+  int idx = 0, count = 0;
+
+  while (idx < ORB_GENE_SIZE) {
+    count += ((float)orb->trace[idx]/orb->trace_count < .0001 ? 0 : 1);
+    idx++;
+  }
+
+  return (100.0*count)/ORB_GENE_SIZE;
+}
+
 void free_orb(void* orb) {
   mm_elem_free(orb_mm, orb);
 }

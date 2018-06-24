@@ -71,17 +71,6 @@ static orb_t* str2orb(char* str) {
   return NULL;
 }
 
-static float calc_orb_instr_usage(orb_t* orb) {
-  int idx = 0, count = 0;
-
-  while (idx < ORB_GENE_SIZE) {
-    count += ((float)orb->trace[idx]/orb->trace_count < .0001 ? 0 : 1);
-    idx++;
-  }
-
-  return 100.0*count/ORB_GENE_SIZE;
-}
-
 static void print_orb_status(orb_t* orb) {
   printf("%8p  ->  map/orb%d/ @ [%2d, %2d]\n", orb, orb->id, orb->x, orb->y);
   printf("  [Score]  : %d\n", orb->score);
@@ -91,7 +80,7 @@ static void print_orb_status(orb_t* orb) {
       orb->regs[0], orb->regs[1], orb->regs[2], orb->regs[3]);
   printf("  [LR]     : 0x%02x\n", orb->lr);
   printf("  [Idx]    : 0x%02x\n", orb->idx);
-  printf("  [IMU]    : %.2f %%\n", calc_orb_instr_usage(orb));
+  printf("  [IMU]    : %.2f %%\n", get_orb_instr_usage(orb));
 }
 
 static void print_map_status(map_t* map) {

@@ -51,6 +51,8 @@ void      orb_die(orb_t* orb, map_t* map);
 void      orb_mutate(orb_t* orb);
 orb_t*    orb_crossover(orb_t* orb1, orb_t* orb2);
 
+float     get_orb_instr_usage(orb_t const* orb);
+
 void      free_orb(void* orb);
 
 #endif // #ifndef ORB_HH
