@@ -2,6 +2,7 @@
 #define MAP_HH
 
 #include "list.h"
+#include "stats.h"
 
 #define W 80
 #define H 24
@@ -9,11 +10,12 @@
 struct orb_t;
 
 typedef struct map_t {
-  size_t  iteration;
-  int     buffer_idx;
-  char    buffer[2][W*H + 1];
-  char    data[W*H + 1];
-  list_t  orbs;
+  size_t    iteration;
+  int       buffer_idx;
+  char      buffer[2][W*H + 1];
+  char      data[W*H + 1];
+  list_t    orbs;
+  stats_t  *stats;
 } map_t;
 
 map_t*    create_map(void);

@@ -1,6 +1,8 @@
 #ifndef CONFIG_HH
 #define CONFIG_HH
 
+#include <stdio.h>
+
 typedef struct {
   int   skip;
   int   seed;
@@ -16,6 +18,8 @@ typedef struct {
   int   food_rate;
   char  food_types[2];
   int   food_scores[2];
+
+  const char stats_output[FILENAME_MAX];
 
 } config_t;
 

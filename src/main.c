@@ -2,6 +2,7 @@
 #include <argp.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <termios.h>
 #include <unistd.h>
 #include <pthread.h>
@@ -102,6 +103,11 @@ static void* input(void* ptr);
 
 map_t* map = NULL;
 
+void handle_exit(int sig) {
+  free_map(map);
+  exit(sig);
+}
+
 int main(int argc, char* argv[]) {
   int l;
 
@@ -113,6 +119,7 @@ int main(int argc, char* argv[]) {
 
   // create map
   map = create_map();
+  signal(SIGINT, handle_exit);
 
   // create orbs
   for (l = 0; l < global_config.orb_count; l++) {
@@ -121,13 +128,20 @@ int main(int argc, char* argv[]) {
     map_add_orb(map, orb);
   }
 
+  // setup state handling
+  orbs_state_init();
+
   // skip given amount of iterations
   for (l = 0; l < global_config.skip; l++) {
     update_map(map);
-  }
 
-  // setup state handling
-  orbs_state_init();
+    // check if population died out
+    if (!map->orbs.size) {
+      printf("Population died out @iteration = %d\n", l);
+      orbs_state = ST_EXIT;
+      break;
+    }
+  }
 
   // start input thread
   pthread_t input_thread;
@@ -153,8 +167,7 @@ int main(int argc, char* argv[]) {
 
   pthread_join(input_thread, NULL);
 
-  free_map(map);
-  return 0;
+  handle_exit(0);
 }
 
 struct termios t0, t1;

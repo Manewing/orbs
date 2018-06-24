@@ -16,6 +16,11 @@ map_t* create_map(void) {
   map_t* map = (map_t*)malloc(sizeof(map_t));
   memset(map, 0, sizeof(map_t));
 
+  // create statistics
+  if (strlen(global_config.stats_output) != 0) {
+    map->stats = create_stats(global_config.stats_output);
+  }
+
   // reset map
   return reset_map(map);
 }
@@ -78,6 +83,11 @@ void update_map(map_t* map) {
 
   // update iteration
   map->iteration++;
+
+  // update statistics
+  if (map->stats != NULL) {
+    update_stats(map->stats, map);
+  }
 
   // add new food to map
   map_spawn_food(map);
@@ -157,6 +167,14 @@ void draw_map(map_t* map) {
 
 void free_map(void* map) {
   map_t* __map = map;
+
+  // free orbs
   list_remove_all(&__map->orbs, free_orb);
+
+  // free statistics
+  if (__map->stats != NULL) {
+    free_stats(__map->stats);
+  }
+
   free(map);
 }

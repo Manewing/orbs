@@ -20,7 +20,8 @@ config_t global_config = {
   .orb_scores         = { 2000, 4000, 8000 },
   .food_rate          =     30,
   .food_types         = {  '+',  '#' },
-  .food_scores        = { 1000, 4000 }
+  .food_scores        = { 1000, 4000 },
+  .stats_output       = "\0"
 };
 
 #define __config_elem(cfg_t, cfg, elem, elem_t, doc) \
@@ -44,7 +45,8 @@ static struct config_elem config_elems[] = {
   __config_elem(config_t, global_config, orb_scores[2], "%d", "Min. score for orb type 'O'"),
   __config_elem(config_t, global_config, food_rate, "%d", "Food spawn rate P(food) = 1 / food_rate"),
   __config_elem(config_t, global_config, food_scores[0], "%d", "Score of food '+'"),
-  __config_elem(config_t, global_config, food_scores[1], "%d", "Score of food '#'")
+  __config_elem(config_t, global_config, food_scores[1], "%d", "Score of food '#'"),
+  __config_elem(config_t, global_config, stats_output, "%s", "Output directory for statistics")
 };
 
 static int config_elems_count(void) {
