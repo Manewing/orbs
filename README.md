@@ -6,15 +6,23 @@
 Each *orb* ('.', 'o', 'O') is essentially a little micro-processor with registers and status flags.
 The genome of the *orb* is it's instruction memory ("Havard architecture").
 The world it is living in consists of other *orbs* and food ('+', '#').
+
+![Screenshot](doc/screenshots/orbs_view_desc.png)
+
 If an *orb* hits food it eats the food automatically, which increases its *score*.
 Every, by the *orb*, executed instruction reduces it's *score* by a given amount. The *score* of an *orb* reaches 0 it dies.
 The *score* of an *orb* also determines whether it is able to reproduce itself or not.
 When two *orbs* meet, they reproduce if they are able to. Reproduction is performed by the genetic algorithm, creating two new *orbs*.
 
+![Screenshot](doc/screenshots/orbs_complex.gif)
+
 ## The simulator
 The simulator is console based and offers different levels of interaction.
 The simulation can be paused by pressing the `p` key.
 This opens a shell allowing a more detailed analyses like the disassembly of the genome of an *orb*.
+
+![Screenshot](doc/screenshots/orbs_shell.png)
+
 With `w` and `s` the simulation speed can be changed.
 The different parameters of the simulation like the mutation rate, can be configured via the command line or by providing a configuration file.
 For a documentation of the configurable parameters run:
@@ -35,3 +43,6 @@ sudo apt-get install libreadline6-dev
 ## Build
 
 Just run `make`. (For Mac might be necessary to add `-largp` flag to `LIBS`).
+
+# TODO
+- [ ] Generate statistics/plots, e.g. avg. instruction usage over time
