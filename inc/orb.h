@@ -6,10 +6,6 @@
 #include <stdint.h>
 
 // status flags
-#define ORB_RF 0x01
-#define ORB_DF 0x02
-#define ORB_LF 0x04
-#define ORB_TF 0x08
 #define ORB_ZF 0x10
 #define ORB_NF 0x20
 
@@ -26,7 +22,7 @@ typedef struct orb_t {
   int      ttl;
 
   uint8_t  status;
-  uint8_t  regs[4];
+  int8_t   regs[4];
   int      lr;
   int      idx;
   uint8_t  genes[ORB_GENE_SIZE];
@@ -37,7 +33,6 @@ typedef struct orb_t {
   int      id;
   int      highlight;
 } orb_t;
-
 
 orb_t*    create_orb(void);
 orb_t*    reset_orb(orb_t* orb);

@@ -1,4 +1,5 @@
 #include "orb.h"
+#include "orb_instr.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -87,9 +88,10 @@ void orb_live(orb_t* orb, map_t* map) {
 
   switch (instr & 0xF) {
     default:
-      // sleep
+    case NOP_CODE:
+      // nop
       break;
-    case 0x0:
+    case ACT_CODE:
       {
 
         // act
@@ -109,27 +111,27 @@ void orb_live(orb_t* orb, map_t* map) {
         orb->score--;
 
       } break;
-    case 0x1:
+    case ACTCND_CODE:
       {
 
         // act
         // ccdd 0001
 
-        if (r1 == 0x0 || r1 == ((orb->status >> 4) & 0x3)) {
+        if (r1 == ((orb->status >> 4) & 0x3)) {
 
           orb->x = wrap(orb->x + dirs[r2][0], W, 0);
           orb->y = wrap(orb->y + dirs[r2][1], H, 0);
 
         }
 
-        if (r1 != 0x0)
-          orb->status &= 0xf;
+        CLEAR_ST(orb->status);
 
         // acting costs more
         orb->score--;
 
       } break;
-    case 0x2:
+    case 0xC:
+    case SENSE_CODE:
       {
 
         // sense
@@ -175,31 +177,40 @@ void orb_live(orb_t* orb, map_t* map) {
         }
 
       } break;
-    case 0x3:
+    case JMP_CODE:
       {
 
         // jmp
         // cclx 0011
         // yyyy yyyy
         //
-        if (r1 == 0x0 || r1 == ((orb->status >> 4) & 0x3)) {
 
-          int _of = orb->genes[(orb->idx+1) & ORB_GENE_MASK];
+        // skip immediate
+        orb->idx = NEXT_IDX(orb->idx);
 
-          if (instr & 0x10)
-            _of = -_of;
-          if (instr & 0x20)
-            orb->lr = (orb->idx + 1) & ORB_GENE_MASK;
+        int cnd = 1;
+        if (r1 != 0x0) {
+          cnd = (r1 == ((orb->status >> 4) & 0x3));
+          cnd = (instr & 0x10) ? !cnd : cnd;
+        }
+
+        if (cnd) {
+
+          int _of = orb->genes[orb->idx];
+
+          if (instr & 0x20) {
+            orb->lr = NEXT_IDX(orb->idx);
+          }
 
           orb->idx = (orb->idx + _of) & ORB_GENE_MASK;
           jmp = 1;
         }
 
         if (r1 != 0x0)
-          orb->status &= 0xf;
+          orb->status &= ~(0x3 << 4);
 
       } break;
-    case 0x4:
+    case MOV_CODE:
       {
 
         // mov
@@ -208,66 +219,47 @@ void orb_live(orb_t* orb, map_t* map) {
 
         if (r1 == r2) {
           // immediate
-          orb->idx = (orb->idx + 1) & ORB_GENE_MASK;
+          orb->idx = NEXT_IDX(orb->idx);
           orb->regs[r1] = orb->genes[orb->idx];
         } else {
           orb->regs[r1] = orb->regs[r2];
         }
 
       } break;
-    case 0x5:
+    case ADD_CODE:
       {
 
         // add
         // r1r2 0101
 
         orb->regs[r1] += orb->regs[r2];
-        if (orb->regs[r1] == 0)
-          orb->status |= ORB_ZF;
-        else if(orb->regs[r1] < 0)
-          orb->status |= ORB_NF;
+        SET_ST_ARIT(orb->status, orb->regs[r1]);
 
       } break;
-    case 0x6:
+    case SUB_CODE:
       {
 
         // sub
         // r1r2 0110
 
         orb->regs[r1] -= orb->regs[r2];
-        if (orb->regs[r1] == 0)
-          orb->status |= ORB_ZF;
-        else if(orb->regs[r1] < 0)
-          orb->status |= ORB_NF;
+        SET_ST_ARIT(orb->status, orb->regs[r1]);
 
       } break;
-    case 0x7:
+    case IDC_CODE:
       {
         // inc/dec
-        // r1lx 0111
+        // r10x 0111
 
-        if (instr & 0x10)
+        if (IDC_GET_X(instr)) {
           orb->regs[r1]++;
-        else
+        } else {
           orb->regs[r1]--;
-
-        if (orb->regs[r1] == 0)
-          orb->status |= ORB_ZF;
-        else if(orb->regs[r1] < 0)
-          orb->status |= ORB_NF;
+        }
+        SET_ST_ARIT(orb->status, orb->regs[r1]);
 
       } break;
-    case 0x8:
-      {
-        // stat
-        // xxxx 1000
-
-        orb->status &= ~ORB_ZF;
-        if ((instr >> 4) == (orb->status & 0xf))
-            orb->status |= ORB_ZF;
-
-      } break;
-    case 0x9:
+    case LDS_CODE:
       {
         // load/store
         // r1r2 1001
@@ -288,7 +280,18 @@ void orb_live(orb_t* orb, map_t* map) {
          }
 
       } break;
-    case 0xA:
+   case 0xD:
+   case 0x8:
+      {
+        // stat
+        // xxxx 1000
+
+        orb->status &= ~ORB_ZF;
+        if ((instr >> 4) == (orb->status & 0xf))
+            orb->status |= ORB_ZF;
+
+      } break;
+    case RET_CODE:
       {
         // return
         // ccxx 1010
@@ -301,8 +304,9 @@ void orb_live(orb_t* orb, map_t* map) {
       } break;
   }
 
-  if (!jmp)
-    orb->idx = (orb->idx + 1) & ORB_GENE_MASK;
+  if (!jmp) {
+    orb->idx = NEXT_IDX(orb->idx);
+  }
 
   if (orb->score-- <= 0 || ++orb->lifetime >= orb->ttl) {
     orb_die(orb, map);
@@ -322,9 +326,10 @@ int orb_disas(orb_t const* orb, int idx, char buffer[64]) {
 
   switch (instr & 0xF) {
     default:
+    case NOP_CODE:
       sprintf(buffer, "nop");
       return 1;
-    case 0x0:
+    case ACT_CODE:
       {
 
         // act
@@ -335,7 +340,7 @@ int orb_disas(orb_t const* orb, int idx, char buffer[64]) {
           sprintf(buffer, "act\t%s", dirs[r1]);
 
       } return 1;
-    case 0x1:
+    case ACTCND_CODE:
       {
 
         // act
@@ -346,7 +351,7 @@ int orb_disas(orb_t const* orb, int idx, char buffer[64]) {
           sprintf(buffer + _n, "\t\tif status & 0x%x0", r1);
 
       } return 1;
-    case 0x2:
+    case SENSE_CODE:
       {
 
         // sense
@@ -362,7 +367,7 @@ int orb_disas(orb_t const* orb, int idx, char buffer[64]) {
         sprintf(buffer, "sense\t%s,\tr%d", dirs[r2], r1);
 
       } return 1;
-    case 0x3:
+    case JMP_CODE:
       {
 
         // jmp
@@ -370,19 +375,19 @@ int orb_disas(orb_t const* orb, int idx, char buffer[64]) {
         // yyyy yyyy
 
         int _of = orb->genes[(orb->idx+1) & ORB_GENE_MASK];
-        if (instr & 0x10)
-          _of = -_of;
-
         int _idx = (idx + _of) & ORB_GENE_MASK;
+
         char _l = (instr & 0x20) ? 'l' : ' ';
+        const char * _c = (instr & 0x10) ? "!" : "";
 
         int _n = sprintf(buffer, "jmp%c\t0x%02x", _l, _idx);
 
-        if (r1 != 0x0)
-          sprintf(buffer + _n, "\t\tif status & 0x%x0", r1);
+        if (r1 != 0x0) {
+          sprintf(buffer + _n, "\t\tif %sstatus & 0x%x0", _c, r1);
+        }
 
       } return 2;
-    case 0x4:
+    case MOV_CODE:
       {
 
         // mov
@@ -399,7 +404,7 @@ int orb_disas(orb_t const* orb, int idx, char buffer[64]) {
         }
 
       }
-    case 0x5:
+    case ADD_CODE:
       {
 
         // add
@@ -408,7 +413,7 @@ int orb_disas(orb_t const* orb, int idx, char buffer[64]) {
         sprintf(buffer, "add\tr%d,\tr%d", r1, r2);
 
       } return 1;
-    case 0x6:
+    case SUB_CODE:
       {
 
         // sub
@@ -417,7 +422,7 @@ int orb_disas(orb_t const* orb, int idx, char buffer[64]) {
         sprintf(buffer, "sub\tr%d,\tr%d", r1, r2);
 
       } return 1;
-    case 0x7:
+    case IDC_CODE:
       {
         // inc/dec
         // r10x 0111
@@ -425,15 +430,7 @@ int orb_disas(orb_t const* orb, int idx, char buffer[64]) {
         sprintf(buffer, "%s\tr%d", (instr & 0x10) ? "inc" : "dec", r1);
 
       } return 1;
-    case 0x8:
-      {
-        // stat
-        // xxxx 1000
-
-        sprintf(buffer, "stat\t0x%x", (instr >> 4));
-
-      } break;
-    case 0x9:
+    case LDS_CODE:
       {
         // load/store
         // r1r2 1001
@@ -454,7 +451,7 @@ int orb_disas(orb_t const* orb, int idx, char buffer[64]) {
          }
 
       } return 1;
-    case 0xA:
+    case RET_CODE:
       {
         // return
         // cc00 1010
