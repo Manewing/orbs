@@ -60,7 +60,7 @@ readline, argp (Mac OS) and optionally if you want to build the unit-tests
 
 4. Configure and build `orbs`, default `BUILD_TESTS=OFF`:
     ```
-    cd cxxg;
+    cd orbs;
     mkdir build && cd build;
     cmake ../ -DBUILD_TESTS=[ON/OFF]
     make
