@@ -30,19 +30,47 @@ For a documentation of the configurable parameters run:
 ./orbs --config-info
 ```
 
-# Installation and build
+# Build
 
-## Prerequisites
+In order to build `orbs` you need `cmake (version >= 3.5)`, the GNU C libraries
+readline, argp (Mac OS) and optionally if you want to build the unit-tests
+`google-test (version >= 1.8)`.
 
-The GNU C libraries readline and argp.
+1. Install `cmake`:
+    ```
+    sudo apt install cmake # Ubuntu
+    brew install cmake # Mac OS (brew)
+    ```
+2. Install readline and argp
+  ```
+  sudo apt install libreadline6-dev # Ubuntu
+  brew install readline # Mac OS (brew)
+  brew install argp-standalone # Mac OS (brew)
+  ```
+3. (Optional) Install `google-test`:
+    ```
+    wget https://github.com/google/googletest/archive/release-1.8.0.tar.gz
+    tar -xzf release-1.8.0.tar.gz && cd googletest-release-1.8.0
+    mkdir build && cd build
+    cmake .. -DCMAKE_INSTALL_PREFIX=install -DCMAKE_CXX_STANDARD=11
+    make && make install
+    export GTEST_ROOT=`pwd`/install
+    export GMOCK_ROOT=$GTEST_ROOT
+    ```
 
-```
-sudo apt-get install libreadline6-dev
-```
-
-## Build
-
-Just run `make`. (For Mac might be necessary to add `-largp` flag to `LIBS`).
+4. Configure and build `orbs`, default `BUILD_TESTS=OFF`:
+    ```
+    cd cxxg;
+    mkdir build && cd build;
+    cmake ../ -DBUILD_TESTS=[ON/OFF]
+    make
+    ```
 
 # TODO
 - [ ] Generate statistics/plots, e.g. avg. instruction usage over time
+- [ ] Unit test for `list`
+- [ ] Unit test for `mm`
+- [ ] Unit test for `stats`
+- [ ] Unit test for `config`
+- [ ] Unit test for `shell`
+- [ ] Unit test for `map`

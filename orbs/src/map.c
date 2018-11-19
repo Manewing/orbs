@@ -8,7 +8,6 @@
 #include "config.h"
 
 #define reset_str   "\n\33[0;0f"
-#define rand_food   (rand() % global_config.food_rate == 1)
 
 map_t* create_map(void) {
 
@@ -20,6 +19,10 @@ map_t* create_map(void) {
   if (strlen(global_config.stats_output) != 0) {
     map->stats = create_stats(global_config.stats_output);
   }
+
+  // set food rate
+  map->food_rate = global_config.food_rate;
+  map->food_inc_rate = 100000;
 
   // reset map
   return reset_map(map);
@@ -63,9 +66,16 @@ void map_update_orb(map_t* map, orb_t* orb) {
 }
 
 void map_spawn_food(map_t* map) {
+  // check if food rate needs to be increased
+  if (map->food_inc_timer >= map->food_inc_rate) {
+    map->food_rate++;
+    map->food_inc_rate += 2000;
+    map->food_inc_timer = 0;
+  }
+  map->food_inc_timer++;
 
   // spawn food
-  if (rand_food) {
+  if ((rand() % map->food_rate) == 1) {
 
     // get random position
     int fx = rand() % W;
@@ -143,6 +153,8 @@ void update_map(map_t* map) {
         // update parent scores
         orb->score >>= 2;
         other->score >>= 2;
+        new_orb1->score = orb->score;
+        new_orb2->score = other->score;
 
         tmp_orb_map[pos(orb->x, orb->y)] = NULL;
       }
@@ -156,9 +168,10 @@ void update_map(map_t* map) {
 void draw_map(map_t* map) {
   // update map info
   int n = sprintf(map_buffer(map, 0),
-      "[ORBS][0x%x] %d Hz, # %6ld: Orbs: %ld, FR: %d, MR: %d",
+      "[ORBS][0x%x] %d Hz, # %6ld: Orbs: %ld, "
+      "FoodRate: 1/%d, MutationRate: 1/%d",
       global_config.seed, global_config.herz, map->iteration, map->orbs.size,
-      global_config.food_rate, global_config.orb_mutation);
+      map->food_rate, global_config.orb_mutation);
   map_buffer(map, 0)[n] = ' ';
 
   printf(reset_str);

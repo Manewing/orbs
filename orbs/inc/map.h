@@ -11,6 +11,9 @@ struct orb_t;
 
 typedef struct map_t {
   size_t    iteration;
+  int       food_rate;
+  int       food_inc_rate;
+  int       food_inc_timer;
   int       buffer_idx;
   char      buffer[2][W*H + 1];
   char      data[W*H + 1];
