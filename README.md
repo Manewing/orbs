@@ -42,11 +42,11 @@ readline, argp (Mac OS) and optionally if you want to build the unit-tests
     brew install cmake # Mac OS (brew)
     ```
 2. Install readline and argp
-  ```
-  sudo apt install libreadline6-dev # Ubuntu
-  brew install readline # Mac OS (brew)
-  brew install argp-standalone # Mac OS (brew)
-  ```
+    ```
+    sudo apt install libreadline6-dev # Ubuntu
+    brew install readline # Mac OS (brew)
+    brew install argp-standalone # Mac OS (brew)
+    ```
 3. (Optional) Install `google-test`:
     ```
     wget https://github.com/google/googletest/archive/release-1.8.0.tar.gz
