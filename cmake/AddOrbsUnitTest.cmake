@@ -23,8 +23,7 @@ add_test(unittest_${ARGS_NAME} ${TARGET})
 target_link_libraries(${TARGET}
   ${GTEST_LIBRARIES}
   ${GTEST_MAIN_LIBRARY}
-  pthread
-  readline
+  ${ORBS_LIBRARIES}
 )
 
 target_include_directories(${TARGET}

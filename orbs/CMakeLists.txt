@@ -29,8 +29,7 @@ add_executable(${TARGET}
 )
 
 target_link_libraries(${TARGET}
-  pthread
-  readline
+  ${ORBS_LIBRARIES}
 )
 
 target_include_directories(${TARGET} PUBLIC inc)

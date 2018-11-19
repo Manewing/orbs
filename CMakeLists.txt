@@ -11,6 +11,21 @@ set(CMAKE_CXX_FLAGS
   "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -ggdb"
 )
 
+set(ORBS_LIBRARIES
+  pthread
+  readline
+)
+
+# for apple we have to manually add argp
+if (APPLE)
+  find_package(argp REQUIRED)
+  include_directories(SYSTEM ${ARGP_INCLUDE_PATH})
+  set(ORBS_LIBRARIES
+    ${ORBS_LIBRARIES}
+    ${ARGP_LIBRARIES}
+  )
+endif()
+
 add_subdirectory(orbs)
 
 option(BUILD_TESTS "If to build unit tests (need google-test)" OFF)
