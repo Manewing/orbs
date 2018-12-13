@@ -69,7 +69,7 @@ readline, argp (Mac OS) and optionally if you want to build the unit-tests
 # TODO
 - [ ] Generate statistics/plots, e.g. avg. instruction usage over time
 - [ ] Unit test for `list`
-- [ ] Unit test for `mm`
+- [X] Unit test for `mm`
 - [ ] Unit test for `stats`
 - [ ] Unit test for `config`
 - [ ] Unit test for `shell`

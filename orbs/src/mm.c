@@ -10,7 +10,7 @@ struct mm* create_mm(const size_t elem_size) {
   m->elem_size = elem_size;
   m->buffer_idx = 0;
   m->buffer_size = MM_INIT_SIZE;
-  m->buffer = (void**)malloc(sizeof(void*) * elem_size * MM_INIT_SIZE);
+  m->buffer = (void**)malloc(sizeof(void*) * m->buffer_size);
 
   return m;
 }
@@ -30,7 +30,7 @@ void mm_elem_free(struct mm* m, void* elem) {
   if (m->buffer_idx >= m->buffer_size) {
     // run out of buffer space, realloc
     m->buffer_size *= 2;
-    m->buffer = realloc(m->buffer, m->buffer_size);
+    m->buffer = realloc(m->buffer, sizeof(void*) * m->buffer_size);
   }
 
   // store element
