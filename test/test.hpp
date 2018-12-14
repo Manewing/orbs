@@ -4,10 +4,10 @@
 #include <gtest/gtest.h>
 
 extern "C" {
-#include <stdio.h>
-#include <string.h>
 #include <orb.h>
 #include <orb_instr.h>
+#include <stdio.h>
+#include <string.h>
 }
 
 namespace {
@@ -31,13 +31,20 @@ inline void dump_disas(orb_t const *orb, int start, int end) {
   }
 }
 
-inline void orb_live_range(map_t *map, orb_t *orb, int idxs, int idxe) {
+inline void orb_live_range(map_t *map, orb_t *orb, int idxs, int idxe,
+                           bool disas = false) {
+  char buffer[64];
+
   orb->idx = idxs;
   while (orb->idx < idxe) {
+    if (disas) {
+      orb_disas(orb, orb->idx, buffer);
+      printf("  [0x%x]: %s\n", orb->idx, buffer);
+    }
     orb_live(orb, map);
   }
 }
 
-}
+} // namespace
 
 #endif // #ifndef TEST_HPP

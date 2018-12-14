@@ -118,7 +118,7 @@
 #define JMP_IFLR(cnd)         JMP_INSTR(cnd, 0x0, 0x1)
 #define JMP_IFNLR(cnd)        JMP_INSTR(cnd, 0x1, 0x1)
 #define JMP_LR                JMP_INSTR(0x0, 0x0, 0x1)
-#define JMP_ADDR(idx, addr)   (0x101 - (idx) + (addr))
+#define JMP_ADDR(idx, addr)   ((0x100 - (idx) + (addr)) & 0xFF)
 
 // Move: r1 = (r1 != r2) ? r2 : immediate
 //

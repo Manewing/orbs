@@ -12,12 +12,14 @@ TEST(Orb, InstructionAddJmpSubMovi) {
   // clear genes
   memset(orb->genes, NOP, ORB_GENE_SIZE);
 
-  // mov r3, $COUNT
-  // inc r0
-  // add r1, r0
-  // mov r2, r0
-  // sub r2, r3
-  // jmp 0x2      if ! status & ORB_ZF
+  // 0x00:  mov r3, $COUNT
+  // 0x01:  COUNT
+  // 0x02:  inc r0
+  // 0x03:  add r1, r0
+  // 0x04:  mov r2, r0
+  // 0x05:  sub r2, r3
+  // 0x06:  jmp 0x2      if ! status & ORB_ZF
+  // 0x07:  JMP_IMD
 
   int idx = 0;
   orb->genes[idx++] = MOVI(REG3);
