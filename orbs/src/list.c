@@ -6,7 +6,6 @@
 
 static struct mm* list_mm = NULL;
 
-
 void list_add(list_t* l, void* data) {
 
   if (list_mm == NULL)
@@ -20,10 +19,8 @@ void list_add(list_t* l, void* data) {
 }
 
 int list_remove(list_t* l, void* data) {
-  node_t** pp = &l->head;
-  node_t* node = l->head;
-
-  while (node) {
+  for (node_t *node = l->head, **pp = &l->head; node; pp = &node->next,
+      node = node->next) {
 
     if (node->data == data) {
       *pp = node->next;
@@ -31,29 +28,29 @@ int list_remove(list_t* l, void* data) {
       l->size--;
       return 1;
     }
-
-    pp = &node->next;
-    node = node->next;
   }
-
   return 0;
 }
 
 void list_remove_all(list_t* l, void (*free_data)(void*)) {
-  node_t* node = l->head;
+  node_t *node = l->head;
+
   while (node) {
-    node_t* next = node->next;
+    node_t *next = node->next;
+
     free_data(node->data);
     mm_elem_free(list_mm, node);
+
     node = next;
   }
+
+  l->head = NULL;
+  l->size = 0;
 }
 
-void list_print(list_t* l) {
-  node_t* node = l->head;
+void list_print(list_t const *l) {
   printf("list[%ld] (%p):\n", l->size, l);
-  while (node) {
+  for (node_t *node = l->head; node; node = node->next) {
     printf("  %p (%p) -> %p\n", node, node->data, node->next);
-    node = node->next;
   }
 }

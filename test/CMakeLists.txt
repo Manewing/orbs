@@ -39,16 +39,24 @@ add_orbs_unittest(
 # mm test
 set(SOURCES
   test_mm.cpp
-  ../orbs/src/orb.c
-  ../orbs/src/map.c
-  ../orbs/src/config.c
   ../orbs/src/mm.c
-  ../orbs/src/stats.c
-  ../orbs/src/list.c
 )
 
 add_orbs_unittest(
   NAME mm
+  SOURCES ${SOURCES}
+  INCLUDES ../orbs/inc/
+)
+
+# list test
+set(SOURCES
+  test_list.cpp
+  ../orbs/src/mm.c
+  ../orbs/src/list.c
+)
+
+add_orbs_unittest(
+  NAME list
   SOURCES ${SOURCES}
   INCLUDES ../orbs/inc/
 )
