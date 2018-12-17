@@ -1,5 +1,6 @@
 #ifndef ORB_INSTR_HH
 #define ORB_INSTR_HH
+// clang-format off
 
 #include <stdint.h>
 
@@ -183,4 +184,5 @@
 // Immediate value
 #define IMD(val)              ((val) & 0xFF)
 
+// clang-format on
 #endif // #ifndef ORB_INSTR_HH

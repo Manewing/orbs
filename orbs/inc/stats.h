@@ -25,22 +25,22 @@ typedef struct stats_t {
 
   // current number of orbs on the map
   int orbs[STATS_BUFFER_SIZE];
-  FILE* orbs_f;
+  FILE *orbs_f;
 
   // average life time of orbs
   int avg_life_time[STATS_BUFFER_SIZE];
-  FILE* avg_life_time_f;
+  FILE *avg_life_time_f;
 
   // average instruction usage of orbs (in percent * 1000)
   int avg_instr_usage[STATS_BUFFER_SIZE];
-  FILE* avg_instr_usage_f;
+  FILE *avg_instr_usage_f;
 
   // average instruction usage of orbs per instruction (in percent * 1000)
   int avg_instr_usage_per[STATS_BUFFER_SIZE][16];
 
 } stats_t;
 
-stats_t *create_stats(const char* output_dir);
+stats_t *create_stats(const char *output_dir);
 
 void update_stats(stats_t *stats, struct map_t *map);
 

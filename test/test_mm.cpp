@@ -35,10 +35,10 @@ TEST(MM, ElemOverflow) {
 
   // max free capacity is 256, 300 will trigger a realloc
   for (int l = 0; l < 300; l++) {
-    mm_elem_free(m, reinterpret_cast<void*>(l));
+    mm_elem_free(m, reinterpret_cast<void *>(l));
   }
   for (int l = 0; l < 300; l++) {
-    EXPECT_EQ(m->buffer[l], reinterpret_cast<void*>(l));
+    EXPECT_EQ(m->buffer[l], reinterpret_cast<void *>(l));
   }
   EXPECT_EQ(m->buffer_idx, 300);
   EXPECT_EQ(m->buffer_size, 512);
