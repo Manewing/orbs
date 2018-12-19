@@ -173,6 +173,8 @@ static int orbs_cmd_p(char **args) {
 }
 
 static int orbs_cmd_s(char **args) {
+  (void)args;
+
   ORB_SEL_FAIL;
   int id = current_orb->id;
 
@@ -241,7 +243,6 @@ static int orbs_cmd_highlight(char **args) {
 static int orbs_cmd_ls_map(void) {
   printf("%8p  ->  map/\n", &map->orbs);
 
-  int idx = 0;
   node_t *node = map->orbs.head;
   while (node) {
     orb_t *orb = node->data;
@@ -318,7 +319,10 @@ static int orbs_cmd_cd(char **args) {
   return 1;
 }
 
-static int orbs_cmd_c(char **args) { return 0; }
+static int orbs_cmd_c(char **args) {
+  (void)args;
+  return 0;
+}
 
 struct orbs_command {
   const char *cmd;
@@ -348,11 +352,13 @@ static int orbs_command_count(void) {
 }
 
 static int orbs_cmd_help(char **args) {
-  int l;
+  (void)args;
+
   printf("Commands:\n");
-  for (l = 0; l < orbs_command_count(); l++) {
+  for (int l = 0; l < orbs_command_count(); l++) {
     printf("%10s -- %s\n", orbs_commands[l].cmd, orbs_commands[l].help);
   }
+
   return 1;
 }
 

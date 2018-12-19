@@ -95,16 +95,16 @@ void orb_live(orb_t *orb, map_t *map) {
 
     // act
     // dd0x 0000
-    char _d;
+    int dir;
 
     if (instr & 0x10) {
-      _d = r1;
+      dir = r1;
     } else {
-      _d = orb->regs[r1] & 0x3;
+      dir = orb->regs[r1] & 0x3;
     }
 
-    orb->x = wrap(orb->x + dirs[_d][0], W, 0);
-    orb->y = wrap(orb->y + dirs[_d][1], H, 0);
+    orb->x = wrap(orb->x + dirs[dir][0], W, 0);
+    orb->y = wrap(orb->y + dirs[dir][1], H, 0);
 
     // acting costs more
     orb->score--;

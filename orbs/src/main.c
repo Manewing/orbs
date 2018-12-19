@@ -19,12 +19,12 @@ const char *argp_program_bug_address = "todo";
 static char doc[] = "ORBs cell program simulation.";
 static char args_doc[] = "";
 static struct argp_option options[] = {
-    {"skip", 's', "NUM", 0, "Skip first NUM iterations"},
-    {"herz", 'h', "HZ", 0, "Update rate in herz"},
-    {"config", 'f', "FILE", 0, "Configuration FILE to load"},
-    {"configure", 'c', "PARAM=VALUE", 0, "Configure a specific parameter"},
+    {"skip", 's', "NUM", 0, "Skip first NUM iterations", 0},
+    {"herz", 'h', "HZ", 0, "Update rate in herz", 0},
+    {"config", 'f', "FILE", 0, "Configuration FILE to load", 0},
+    {"configure", 'c', "PARAM=VALUE", 0, "Configure a specific parameter", 0},
     {"config-info", 513, NULL, 0,
-     "Prints information about all configurable parameters."},
+     "Prints information about all configurable parameters.", 0},
     {0}};
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
@@ -56,7 +56,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   return 0;
 }
 
-static struct argp argp = {options, parse_opt, args_doc, doc};
+static struct argp argp = {options, parse_opt, args_doc, doc, NULL, NULL, NULL};
 
 typedef enum { ST_EXIT, ST_RUNNING, ST_PAUSED } orbs_state_t;
 static orbs_state_t orbs_state, orbs_request;
@@ -198,7 +198,7 @@ static void *input(void *ptr) {
   // enable direct input
   enable_direct_input();
 
-  int hl_idx = 0, hl_idx_l;
+  unsigned int hl_idx = 0, hl_idx_l;
   orb_t *orb;
   while (orbs_state != ST_EXIT) {
     int c = getc(stdin);
@@ -215,7 +215,7 @@ static void *input(void *ptr) {
       break;
     case 'a':
       hl_idx_l = hl_idx;
-      hl_idx = --hl_idx < 0 ? 0 : hl_idx;
+      hl_idx = hl_idx == 0 ? 0 : (hl_idx - 1);
       orb = get_orb_idx(hl_idx_l);
       if (orb)
         orb_feed(orb, 0);
