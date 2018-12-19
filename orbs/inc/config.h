@@ -1,6 +1,7 @@
 #ifndef CONFIG_HH
 #define CONFIG_HH
 
+#include "config_reader.h"
 #include <stdio.h>
 
 typedef struct {
@@ -21,13 +22,9 @@ typedef struct {
 
   const char stats_output[FILENAME_MAX];
 
-} config_t;
+} global_config_t;
 
-extern config_t global_config;
-
-int read_config_line(const char *line);
-int read_config_file(const char *file);
-
-void print_config_options(void);
+extern global_config_t global_config;
+extern config_reader_t global_config_reader;
 
 #endif // #ifndef CONFIG_HH

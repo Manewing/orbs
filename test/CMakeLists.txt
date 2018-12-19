@@ -60,3 +60,16 @@ add_orbs_unittest(
   SOURCES ${SOURCES}
   INCLUDES ../orbs/inc/
 )
+
+# config test
+set(SOURCES
+  test_config.cpp
+  ../orbs/src/config.c
+  ../orbs/src/config_reader.c
+)
+
+add_orbs_unittest(
+  NAME config
+  SOURCES ${SOURCES}
+  INCLUDES ../orbs/inc/
+)

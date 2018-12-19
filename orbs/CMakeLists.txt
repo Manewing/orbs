@@ -2,6 +2,7 @@ set(TARGET orbs)
 
 set(HEADERS
   inc/config.h
+  inc/config_reader.h
   inc/defines.h
   inc/list.h
   inc/map.h
@@ -14,6 +15,7 @@ set(HEADERS
 
 set(SOURCES
   src/config.c
+  src/config_reader.c
   src/list.c
   src/main.c
   src/map.c

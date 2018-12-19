@@ -28,25 +28,25 @@ static struct argp_option options[] = {
     {0}};
 
 static error_t parse_opt(int key, char *arg, struct argp_state *state) {
-  config_t *config = state->input;
+  config_reader_t *cfg_reader = state->input;
 
   switch (key) {
   case 'c':
-    if (read_config_line(arg) != 0)
+    if (read_config_line(cfg_reader, arg) != 0)
       exit(-1);
     break;
   case 'f':
-    if (read_config_file(arg) != 0)
+    if (read_config_file(cfg_reader, arg) != 0)
       exit(-1);
     break;
   case 'h':
-    config->herz = atoi(arg);
+    read_config_value(cfg_reader, "global_config.herz", arg);
     break;
   case 's':
-    config->skip = atoi(arg);
+    read_config_value(cfg_reader, "global_config.skip", arg);
     break;
   case 513:
-    print_config_options();
+    print_config_options(cfg_reader);
     exit(0);
     break;
   default:
@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
   int l;
 
   // parse command line arguments
-  argp_parse(&argp, argc, argv, 0, 0, &global_config);
+  argp_parse(&argp, argc, argv, 0, 0, &global_config_reader);
 
   // init seed
   srand(global_config.seed);
