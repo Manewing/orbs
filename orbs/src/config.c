@@ -1,6 +1,7 @@
 #include "config.h"
 
-global_config_t global_config = {.skip = 0,
+global_config_t global_config = {.skip = 0UL,
+                                 .exit = -1UL,
                                  .seed = 0,
                                  .herz = 201,
                                  .orb_count = 80,
@@ -15,8 +16,10 @@ global_config_t global_config = {.skip = 0,
                                  .stats_output = "\0"};
 
 static config_elem_t global_config_elems[] = {
-    CONFIG_ELEM(global_config_t, global_config, "%d", skip,
+    CONFIG_ELEM(global_config_t, global_config, "%lu", skip,
                 "Skip first #skip iterations"),
+    CONFIG_ELEM(global_config_t, global_config, "%lu", exit,
+                "Exit after #exit iterations"),
     CONFIG_ELEM(global_config_t, global_config, "%d", herz,
                 "The frame rate in Hz"),
     CONFIG_ELEM(global_config_t, global_config, "%d", seed,

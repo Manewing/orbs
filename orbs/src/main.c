@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "config.h"
+#include "defines.h"
 #include "map.h"
 #include "orb.h"
 #include "shell.h"
@@ -20,6 +21,7 @@ static char doc[] = "ORBs cell program simulation.";
 static char args_doc[] = "";
 static struct argp_option options[] = {
     {"skip", 's', "NUM", 0, "Skip first NUM iterations", 0},
+    {"exit", 'e', "NUM", 0, "Exit after NUM iterations", 0},
     {"herz", 'h', "HZ", 0, "Update rate in herz", 0},
     {"config", 'f', "FILE", 0, "Configuration FILE to load", 0},
     {"configure", 'c', "PARAM=VALUE", 0, "Configure a specific parameter", 0},
@@ -44,6 +46,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     break;
   case 's':
     read_config_value(cfg_reader, "global_config.skip", arg);
+    break;
+  case 'e':
+    read_config_value(cfg_reader, "global_config.exit", arg);
     break;
   case 513:
     print_config_options(cfg_reader);
@@ -83,16 +88,15 @@ static void orbs_state_change(orbs_state_t state) {
 static void orbs_state_handle(void) {
   pthread_mutex_lock(&orbs_state_mtx);
   switch (orbs_request) {
-  case ST_EXIT:
-    orbs_state = ST_EXIT;
-    break;
   case ST_PAUSED:
     orbs_state = ST_PAUSED;
-    while (orbs_request == ST_PAUSED)
+    while (orbs_request == ST_PAUSED) {
       pthread_cond_wait(&orbs_state_cond, &orbs_state_mtx);
+    }
     orbs_state = ST_RUNNING;
     break;
   default:
+    orbs_state = orbs_request;
     break;
   }
   pthread_mutex_unlock(&orbs_state_mtx);
@@ -107,9 +111,18 @@ void handle_exit(int sig) {
   exit(sig);
 }
 
-int main(int argc, char *argv[]) {
-  int l;
+void check_population(map_t const *map, unsigned long iteration) {
+  // check if population died out
+  if (map->orbs.size) {
+    return;
+  }
 
+  printf("Population died out @iteration = %lu\n", iteration);
+  orbs_state = ST_EXIT;
+  handle_exit(0);
+}
+
+int main(int argc, char *argv[]) {
   // parse command line arguments
   argp_parse(&argp, argc, argv, 0, 0, &global_config_reader);
 
@@ -121,7 +134,7 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, handle_exit);
 
   // create orbs
-  for (l = 0; l < global_config.orb_count; l++) {
+  for (int l = 0; l < global_config.orb_count; l++) {
     orb_t *orb = create_orb();
     reset_orb_genes(orb);
     map_add_orb(map, orb);
@@ -130,16 +143,16 @@ int main(int argc, char *argv[]) {
   // setup state handling
   orbs_state_init();
 
-  // skip given amount of iterations
-  for (l = 0; l < global_config.skip; l++) {
-    update_map(map);
+  // check that number of skip iterations is not more than exit
+  if (global_config.skip > global_config.exit) {
+    log_error("main", "Number #skip cannot be more than #exit\n");
+    handle_exit(0);
+  }
 
-    // check if population died out
-    if (!map->orbs.size) {
-      printf("Population died out @iteration = %d\n", l);
-      orbs_state = ST_EXIT;
-      break;
-    }
+  // skip given amount of iterations
+  for (unsigned long l = 0; l < global_config.skip; l++) {
+    update_map(map);
+    check_population(map, l);
   }
 
   // start input thread
@@ -147,24 +160,19 @@ int main(int argc, char *argv[]) {
   pthread_create(&input_thread, NULL, input, NULL);
 
   // main loop
-  while (orbs_state != ST_EXIT) {
+  unsigned long iterations = global_config.exit - global_config.skip;
+  for (unsigned long l = 0; l < iterations && orbs_state != ST_EXIT; l++) {
+    usleep(Hz(global_config.herz));
+
     update_map(map);
     draw_map(map);
-
-    // check if population died out
-    if (!map->orbs.size) {
-      orbs_state = ST_EXIT;
-      printf("Population died out...\n");
-    }
+    check_population(map, l);
 
     // check for request and handle it
-    if (orbs_request != ST_RUNNING)
+    if (orbs_request != ST_RUNNING) {
       orbs_state_handle();
-
-    usleep(Hz(global_config.herz));
+    }
   }
-
-  pthread_join(input_thread, NULL);
 
   handle_exit(0);
 }

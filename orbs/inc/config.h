@@ -5,7 +5,9 @@
 #include <stdio.h>
 
 typedef struct {
-  int skip;
+  unsigned long skip;
+  unsigned long exit;
+
   int seed;
   int herz;
 
