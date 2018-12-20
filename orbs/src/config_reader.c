@@ -96,6 +96,7 @@ int read_config_file(config_reader_t const *cfg, const char *file) {
     }
   }
 
+  free(line);
   fclose(fd);
   return ret;
 }

@@ -24,7 +24,7 @@ typedef struct orb_t {
   uint8_t status;
   int8_t regs[4];
   int lr;
-  int idx;
+  uint8_t idx;
   uint8_t genes[ORB_GENE_SIZE];
 
   int trace[ORB_GENE_SIZE];

@@ -18,8 +18,9 @@ static int orb_id = 0;
 orb_t *create_orb(void) {
 
   // check if orb memory manager is initialized
-  if (orb_mm == NULL)
+  if (orb_mm == NULL) {
     orb_mm = create_mm(sizeof(orb_t));
+  }
 
   // create new orb and reset it
   orb_t *orb = (orb_t *)mm_elem_create(orb_mm);
@@ -29,7 +30,6 @@ orb_t *create_orb(void) {
 
   // reset orb
   reset_orb_genes(orb);
-
   return reset_orb(orb);
 }
 
@@ -43,6 +43,7 @@ orb_t *reset_orb(orb_t *orb) {
   orb->regs[1] = 0;
   orb->regs[2] = 0;
   orb->regs[3] = 0;
+  orb->highlight = 0;
 
   // set random position
   orb->x = rand() % W;
@@ -62,12 +63,10 @@ orb_t *reset_orb(orb_t *orb) {
 }
 
 orb_t *reset_orb_genes(orb_t *orb) {
-  int l;
-
   // create random genes
-  for (l = 0; l < ORB_GENE_SIZE; l++)
+  for (int l = 0; l < ORB_GENE_SIZE; l++) {
     orb->genes[l] = rand_char;
-
+  }
   return orb;
 }
 
