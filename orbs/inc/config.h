@@ -5,24 +5,20 @@
 #include <stdio.h>
 
 typedef struct {
+  /// Number of iterations to skip
   unsigned long skip;
+
+  /// Number of iterations to exit after
   unsigned long exit;
 
+  /// Seed for the scenario
   int seed;
+
+  /// Current frequency for simulation
   int herz;
 
-  int orb_count;
-  int orb_score;
-  int orb_ttl;
-  int orb_mutation;
-  char orb_bodies[3];
-  int orb_scores[3];
-
-  int food_rate;
-  char food_types[2];
-  int food_scores[2];
-
-  const char stats_output[FILENAME_MAX];
+  /// Path to the output directory for statistics
+  const char stats[FILENAME_MAX];
 
 } global_config_t;
 

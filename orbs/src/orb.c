@@ -9,11 +9,21 @@
 #include "mm.h"
 
 #define rand_char (rand() & 0xff)
-#define rand_mutation (rand() % global_config.orb_mutation == 1)
+#define rand_mutation (rand() % orb_config.mutation == 1)
 
 static struct mm *orb_mm = NULL;
 
 static int orb_id = 0;
+
+static const char orb_bodies[3] = {'.', 'o', 'o'};
+
+orb_config_t orb_config = {
+    .count = 80,
+    .score = 1500,
+    .ttl = 0xffffff,
+    .mutation = 10000,
+    .scores = {2000, 4000, 8000},
+};
 
 orb_t *create_orb(void) {
 
@@ -50,10 +60,10 @@ orb_t *reset_orb(orb_t *orb) {
   orb->y = rand() % H;
 
   // initialize score
-  orb->ttl = global_config.orb_ttl;
+  orb->ttl = orb_config.ttl;
   orb->lifetime = 0;
-  orb->score = global_config.orb_score;
-  orb->body = global_config.orb_bodies[0];
+  orb->score = orb_config.score;
+  orb->body = orb_bodies[0];
 
   // reset trace
   orb->trace_count = 0;
@@ -444,19 +454,21 @@ int orb_disas(orb_t const *orb, int idx, char buffer[64]) {
 void orb_feed(orb_t *orb, char food) {
 
   // update score depending on food type
-  if (food == global_config.food_types[0])
-    orb->score += global_config.food_scores[0];
-  else if (food == global_config.food_types[1])
-    orb->score += global_config.food_scores[1];
+  if (food == '+') {
+    orb->score += map_config.food_scores[0];
+  } else if (food == '#') {
+    orb->score += map_config.food_scores[1];
+  }
 
   // update orb body depending on score
   if (!orb->highlight) {
-    if (orb->score >= global_config.orb_scores[2])
-      orb->body = global_config.orb_bodies[2];
-    else if (orb->score >= global_config.orb_scores[1])
-      orb->body = global_config.orb_bodies[1];
-    else
-      orb->body = global_config.orb_bodies[0];
+    if (orb->score >= orb_config.scores[2]) {
+      orb->body = orb_bodies[2];
+    } else if (orb->score >= orb_config.scores[1]) {
+      orb->body = orb_bodies[1];
+    } else {
+      orb->body = orb_bodies[0];
+    }
   }
 }
 

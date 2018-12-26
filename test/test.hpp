@@ -45,6 +45,25 @@ inline void orb_live_range(map_t *map, orb_t *orb, int idxs, int idxe,
   }
 }
 
+inline const char *CSTR(::std::string const &Str) {
+  return Str.c_str();
+}
+
+// Source root directory
+::std::string ROOT_DIR = "";
+
 } // namespace
+
+int main(int argc, char *argv[]) {
+  ::testing::InitGoogleTest(&argc, argv);
+
+  if (argc != 2 || argv[1] == NULL) {
+    ::std::cerr << "TEST FAILED: Invalid call syntax" << ::std::endl;
+    return 1;
+  }
+  ROOT_DIR = argv[1];
+
+  return RUN_ALL_TESTS();
+}
 
 #endif // #ifndef TEST_HPP

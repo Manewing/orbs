@@ -66,6 +66,11 @@ set(SOURCES
   test_config.cpp
   ../orbs/src/config.c
   ../orbs/src/config_reader.c
+  ../orbs/src/orb.c
+  ../orbs/src/map.c
+  ../orbs/src/mm.c
+  ../orbs/src/stats.c
+  ../orbs/src/list.c
 )
 
 add_orbs_unittest(

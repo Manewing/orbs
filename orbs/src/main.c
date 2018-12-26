@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, handle_exit);
 
   // create orbs
-  for (int l = 0; l < global_config.orb_count; l++) {
+  for (int l = 0; l < orb_config.count; l++) {
     orb_t *orb = create_orb();
     reset_orb_genes(orb);
     map_add_orb(map, orb);

@@ -12,6 +12,27 @@
 #define ORB_GENE_SIZE 256
 #define ORB_GENE_MASK 0xFF
 
+/// Configuration of orbs
+typedef struct {
+
+  // The initial number of orbs
+  int count;
+
+  /// The initial score of the orbs
+  int score;
+
+  /// The time to life of an orb
+  int ttl;
+
+  /// The mutation rate of an orb
+  int mutation;
+
+  /// The different scores for the different orb types ('.', 'o', 'O')
+  int scores[3];
+
+} orb_config_t;
+extern orb_config_t orb_config;
+
 typedef struct orb_t {
   int x;
   int y;

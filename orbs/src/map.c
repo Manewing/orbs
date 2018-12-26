@@ -9,6 +9,8 @@
 
 #define reset_str "\n\33[0;0f"
 
+map_config_t map_config = {.food_rate = 30, .food_scores = {1000, 4000}};
+
 map_t *create_map(void) {
 
   // create new map
@@ -16,12 +18,12 @@ map_t *create_map(void) {
   memset(map, 0, sizeof(map_t));
 
   // create statistics
-  if (strlen(global_config.stats_output) != 0) {
-    map->stats = create_stats(global_config.stats_output);
+  if (strlen(global_config.stats) != 0) {
+    map->stats = create_stats(global_config.stats);
   }
 
   // set food rate
-  map->food_rate = global_config.food_rate;
+  map->food_rate = map_config.food_rate;
   map->food_inc_rate = 100000;
 
   // reset map
@@ -77,10 +79,11 @@ void map_spawn_food(map_t *map) {
     int fx = rand() % W;
     int fy = rand() % H;
 
-    if (map->data[pos(fx, fy)] == global_config.food_types[0])
-      map->data[pos(fx, fy)] = global_config.food_types[1];
-    else
-      map->data[pos(fx, fy)] = global_config.food_types[0];
+    if (map->data[pos(fx, fy)] == '+') {
+      map->data[pos(fx, fy)] = '#';
+    } else {
+      map->data[pos(fx, fy)] = '+';
+    }
   }
 }
 
@@ -123,7 +126,8 @@ void update_map(map_t *map) {
   while (node) {
     orb_t *orb = node->data;
 
-    if (orb->score > global_config.orb_scores[2]) {
+    // TODO make this check a function of the orb
+    if (orb->score > orb_config.scores[2]) {
       if (tmp_orb_map[pos(orb->x, orb->y)] == NULL) {
         tmp_orb_map[pos(orb->x, orb->y)] = orb;
       } else {
@@ -163,7 +167,7 @@ void draw_map(map_t *map) {
                   "[ORBS][0x%x] %d Hz, # %6ld: Orbs: %ld, "
                   "FoodRate: 1/%d, MutationRate: 1/%d",
                   global_config.seed, global_config.herz, map->iteration,
-                  map->orbs.size, map->food_rate, global_config.orb_mutation);
+                  map->orbs.size, map->food_rate, orb_config.mutation);
   map_buffer(map, 0)[n] = ' ';
 
   printf(reset_str);

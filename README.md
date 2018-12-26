@@ -72,6 +72,7 @@ readline, argp (Mac OS) and optionally if you want to build the unit-tests
 - [X] Unit test for `list`
 - [X] Unit test for `mm`
 - [ ] Unit test for `stats`
-- [ ] Unit test for `config`
+- [X] Unit test for `config`
 - [ ] Unit test for `shell`
 - [ ] Unit test for `map`
+- [ ] Unit test for `orb`

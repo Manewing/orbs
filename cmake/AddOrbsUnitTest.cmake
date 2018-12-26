@@ -18,7 +18,7 @@ add_executable(${TARGET}
   ${ARGS_SOURCES}
 )
 
-add_test(unittest_${ARGS_NAME} ${TARGET})
+add_test(unittest_${ARGS_NAME} ${TARGET} ${CMAKE_SOURCE_DIR})
 
 target_link_libraries(${TARGET}
   ${GTEST_LIBRARIES}

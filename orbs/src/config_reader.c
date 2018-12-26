@@ -103,11 +103,11 @@ int read_config_file(config_reader_t const *cfg, const char *file) {
 
 void print_config_options(config_reader_t const *cfg) {
   printf("Configuration information:\n");
-  printf("%-30s %s\n", "# name", "# type    # doc");
+  printf("%-25s %-6s %s\n", "# name", "# type", "# doc");
 
   // print all configuration elements
   for (unsigned int l = 0; l < cfg->elem_count; l++) {
-    printf("  %-30s %s        %s\n", cfg->elems[l].name, cfg->elems[l].type,
+    printf("%-25s %6s %s\n", cfg->elems[l].name, cfg->elems[l].type,
            cfg->elems[l].doc);
   }
 

@@ -9,6 +9,12 @@
 
 struct orb_t;
 
+typedef struct {
+  int food_rate;
+  int food_scores[2];
+} map_config_t;
+extern map_config_t map_config;
+
 typedef struct map_t {
   size_t iteration;
   int food_rate;
