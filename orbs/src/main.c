@@ -64,7 +64,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
 static struct argp argp = {options, parse_opt, args_doc, doc, NULL, NULL, NULL};
 
 typedef enum { ST_EXIT, ST_RUNNING, ST_PAUSED } orbs_state_t;
-static orbs_state_t orbs_state, orbs_request;
+static volatile orbs_state_t orbs_state, orbs_request;
 
 static pthread_mutex_t orbs_state_mtx;
 static pthread_cond_t orbs_state_cond;
